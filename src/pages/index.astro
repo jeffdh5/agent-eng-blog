@@ -22,13 +22,14 @@ const posts = (await getCollection('blog'))
 			<section class="hero">
 				<p class="page-eyebrow">Agentic engineering</p>
 				<h1>A journal on building agents,<br />written as I go.</h1>
+				<p class="page-lead">I write down what I'm learning as agentic engineering takes shape.</p>
 				<p class="page-lead">
-					This is my personal blog. I write down what I'm learning as agentic
-					engineering takes shape: how teams put agents into production, what the
-					infrastructure looks like, which patterns keep surfacing. Some posts are
-					long breakdowns of one open-source project; others are shorter notes on a
-					single idea. The goal is field notes from the work, not a map of the
-					territory.
+					How teams put agents into production, what the infrastructure looks like,
+					which patterns keep surfacing.
+				</p>
+				<p class="page-lead">
+					Some posts dig into one open-source project; others are shorter notes on a
+					single idea. Field notes from the work, not a map of the territory.
 				</p>
 				<p class="page-lead page-lead-last">
 					I spent years on Firebase serverless making hard infrastructure feel simple;
@@ -77,7 +78,7 @@ const posts = (await getCollection('blog'))
 	}
 
 	.page-lead + .page-lead {
-		margin-top: 1rem;
+		margin-top: 0.75rem;
 	}
 
 	.page-lead-last {
