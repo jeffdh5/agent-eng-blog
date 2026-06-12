@@ -3,4 +3,4 @@
 
 export const SITE_TITLE = 'Jeff Huang';
 export const SITE_DESCRIPTION =
-	'Notes on designing agent infrastructure — harness design, SDK abstractions, and what building serverless platforms taught me about this moment. From the founding team of Genkit.';
+	'Harness teardowns from the founding team of Genkit: what Claude Code, Goose, Open SWE, and company eng blogs converge on, distilled into best practices and implemented with Genkit.';

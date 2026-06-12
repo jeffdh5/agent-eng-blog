@@ -1,15 +1,19 @@
 ---
 title: "What this is"
-description: "Design notes from inside the agent platform layer, by someone who helped build the last one."
+description: "Harness teardowns: what open-source agents converge on, distilled into best practices, implemented with Genkit."
 pubDate: "Jun 12 2026"
 ---
 
-Most agent-engineering debates never get past the screenshot stage. Someone declares harnesses are secret sauce. Someone else says context engineering beats RAG. Everyone quote-tweets. Nobody shows the design process — or a measurement.
+I was on the founding team of [Genkit](https://genkit.dev) and lead its Python SDK. Before that I spent years on Firebase's serverless platform, doing for GCP infrastructure what agent SDKs are now doing for harnesses: abstract the plumbing, make the happy path easy, expose hooks where behavior needs to bend.
 
-I have an unusual seat for this conversation. I was on the founding team of [Genkit](https://genkit.dev) and lead its Python SDK; before that I spent years on Firebase's serverless platform, doing for GCP infrastructure what agent SDKs are now doing for harnesses: abstract the plumbing, make the happy path easy, expose hooks where behavior needs to bend.
+Deciding what a platform should absorb next means reading what builders are hand-rolling today. So I read agent harnesses the way other people read papers — Claude Code, Goose, Open SWE, and the internal agents that companies like Stripe, Ramp, and Coinbase describe on their engineering blogs. When you read enough of them, the pattern is hard to miss: independently built systems keep converging on the same pieces. Sandboxed execution, curated toolsets, subagent orchestration, middleware around the loop.
 
-So that's what this blog is. Design memos made public — the API alternatives we considered and why we shipped the one we did. Plus small experiments when the timeline argues about something measurable: real code, real numbers, a takeaway you can use.
+That convergence is the story of this blog, and most posts will follow the same arc:
 
-My core claim, which most of this blog will be spent earning: about 90% of your harness is undifferentiated plumbing, and the interesting engineering question isn't whether to own it — it's where the abstraction boundary goes. We've been here before. Last time it was called serverless.
+1. **Read** a real harness — open source or described in public — closely enough to understand a design decision it made.
+2. **Distill** the pattern into a best practice: what problem it solves, when it applies, what it costs.
+3. **Build** it with Genkit, with real code and a runnable example, so the practice is something you can use rather than nod at.
+
+My core claim, which this blog will spend its life earning: most of a harness is undifferentiated plumbing, and the interesting question isn't whether to own it — it's where the abstraction boundary goes. We've been here before. Last time it was called serverless.
 
 More soon.

@@ -20,10 +20,15 @@ import Layout from '../layouts/BlogPost.astro';
 		Agent infrastructure is that problem again. Interrupts and resumption, tool approval,
 		fallbacks, session state, middleware — most teams are hand-rolling all of it, the way
 		everyone hand-rolled deployment scripts before serverless. My day job is deciding where
-		those abstraction boundaries go, across languages, with real users hitting the API. This
-		blog is where I narrate those decisions: the alternatives we considered, the tradeoffs
-		that decided it, and the experiments I run when the timeline argues about something
-		measurable.
+		those abstraction boundaries go, across languages, with real users hitting the API.
+	</p>
+	<p>
+		Most posts here follow the same arc: I read an open-source harness — Claude Code,
+		Goose, Open SWE, or the internal agents that companies like Stripe, Ramp, and Coinbase
+		describe on their engineering blogs — pull out a pattern they've converged on, distill
+		it into a best practice, and then show how to implement it with Genkit. Reading
+		harnesses is how I figure out what the platform layer should absorb next; writing it up
+		is just doing that thinking in public.
 	</p>
 	<p>
 		Two rules: code snippets come from real, committed code, and numbers come from runs that
