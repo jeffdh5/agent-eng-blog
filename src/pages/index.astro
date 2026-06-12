@@ -31,7 +31,9 @@ const posts = (await getCollection('blog'))
 					/>
 					<div>
 						<p class="hero-name">Jeff Huang</p>
-						<p class="hero-role">Genkit Python · ex-Firebase serverless</p>
+						<p class="hero-role">
+							Google · <a href="https://genkit.dev/">Genkit</a> · ex-Uber
+						</p>
 					</div>
 				</div>
 				<p class="page-eyebrow">Agentic engineering</p>
@@ -46,10 +48,10 @@ const posts = (await getCollection('blog'))
 					single idea. Field notes from the work, not a map of the territory.
 				</p>
 				<p class="page-lead page-lead-last">
-					I spent years on Firebase serverless making hard infrastructure feel simple;
+					I spent five years on Firebase Functions making serverless feel simple;
 					agents are the same job again, at the very beginning of figuring out
-					what's possible, and I'm writing this while we build the open-source
-					primitives and watch the patterns emerge.
+					what's possible, and I'm writing this while we build
+					<a href="https://genkit.dev/">Genkit</a> and watch the patterns emerge.
 				</p>
 			</section>
 
@@ -114,6 +116,15 @@ const posts = (await getCollection('blog'))
 		font-size: 0.8125rem;
 		color: var(--text-muted);
 		margin: 0;
+	}
+
+	.hero-role a {
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+
+	.hero-role a:hover {
+		color: var(--text);
 	}
 
 	.hero h1 {
