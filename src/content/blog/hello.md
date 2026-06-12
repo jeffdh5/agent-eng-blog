@@ -6,7 +6,7 @@ pubDate: "Jun 12 2026"
 
 I was on the founding team of [Genkit](https://genkit.dev) and lead its Python SDK. Before that I spent years on Firebase's serverless platform, doing for GCP infrastructure what agent SDKs are now doing for harnesses: abstract the plumbing, make the happy path easy, expose hooks where behavior needs to bend.
 
-Deciding what a platform should absorb next means reading what builders are hand-rolling today. So I read agent harnesses the way other people read papers — Claude Code, Goose, Open SWE, and the internal agents that companies like Stripe, Ramp, and Coinbase describe on their engineering blogs. When you read enough of them, the pattern is hard to miss: independently built systems keep converging on the same pieces. Sandboxed execution, curated toolsets, subagent orchestration, middleware around the loop.
+If you build SDKs, you end up reading whatever people hand-roll on top of them. So I read agent harnesses — Claude Code, Goose, Open SWE, and the internal agents that companies like Stripe, Ramp, and Coinbase describe on their engineering blogs. Read enough of them and the pattern is hard to miss: independently built systems keep converging on the same pieces. Sandboxed execution, curated toolsets, subagent orchestration, middleware around the loop.
 
 That convergence is the story of this blog, and most posts will follow the same arc:
 
