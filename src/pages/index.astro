@@ -20,15 +20,28 @@ const posts = (await getCollection('blog'))
 		<Header />
 		<main>
 			<section class="hero">
-				<p class="page-eyebrow">Agent infrastructure notes</p>
-				<h1>Patterns worth stealing<br />from real agent harnesses.</h1>
+				<p class="page-eyebrow">Harness engineering notes</p>
+				<h1>What coding agent harnesses<br />actually do, with receipts.</h1>
 				<p class="page-lead">
-					Claude Code, Goose, Open SWE, the internal agents companies describe on their
-					eng blogs — the harnesses that actually ship keep arriving at the same handful
-					of patterns. I read them closely, write up the ones that hold, and show how to
-					build each with <a href="https://genkit.dev">Genkit</a>. I'm Jeff Huang —
-					founding team of Genkit, Python SDK lead, years of Firebase serverless before
-					that. This is reading I'd be doing anyway, written down.
+					If you're building a coding agent for your team, most of the hard problems
+					aren't the model. They're the harness: the tool loop that keeps a growing
+					message history, the context that fills up with file bodies, the guards that
+					stop the agent from quitting early or retrying the same failure forever.
+				</p>
+				<p class="page-lead">
+					Teams at Stripe, Ramp, and Coinbase built internal agents independently and
+					converged on the same shape. <a href="https://github.com/langchain-ai/open-swe">Open SWE</a>
+					and <a href="https://github.com/langchain-ai/deepagents">Deep Agents</a> are the
+					most legible open-source versions of that shape. They're reference
+					implementations, not the stack everyone ships, but they're the best public
+					autopsy of what production-shaped harnesses look like. I read them, measure
+					the failure modes, and implement the patterns with
+					<a href="https://genkit.dev">Genkit</a>.
+				</p>
+				<p class="page-lead page-lead-last">
+					I'm Jeff Huang, founding team of Genkit, Python SDK lead. Former Firebase
+					serverless. Code snippets come from committed repos; numbers come from runs
+					that actually happened.
 				</p>
 			</section>
 
@@ -68,6 +81,15 @@ const posts = (await getCollection('blog'))
 
 	.hero h1 {
 		margin-bottom: 1.25rem;
+	}
+
+	.page-lead + .page-lead {
+		margin-top: 1rem;
+	}
+
+	.page-lead-last {
+		color: var(--text-muted);
+		font-size: 0.9375rem;
 	}
 
 	.recent {

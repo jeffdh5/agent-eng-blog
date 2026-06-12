@@ -3,4 +3,4 @@
 
 export const SITE_TITLE = 'Jeff Huang';
 export const SITE_DESCRIPTION =
-	'Harness teardowns from the founding team of Genkit: what Claude Code, Goose, Open SWE, and company eng blogs converge on, distilled into best practices and implemented with Genkit.';
+	'Notes on building coding agent harnesses: read open implementations like Open SWE, measure the failure modes, implement the patterns with Genkit. By Jeff Huang, Genkit Python lead.';
