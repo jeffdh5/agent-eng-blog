@@ -1,0 +1,62 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 426' role='img' aria-label='Per-message sizes of an 18-message coding agent transcript. File bodies entering through tool results and repeating through tool arguments dwarf all prose.'>
+<rect x='12' y='8' width='10' height='10' rx='2' fill='#c9c6bd'/>
+<text x='27' y='17' font-size='11' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>prose &amp; tool requests</text>
+<rect x='183.20000000000002' y='8' width='10' height='10' rx='2' fill='#2a4a3a'/>
+<text x='198.20000000000002' y='17' font-size='11' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>file/log bytes in tool results</text>
+<rect x='410.20000000000005' y='8' width='10' height='10' rx='2' fill='#9a4a2a'/>
+<text x='425.20000000000005' y='17' font-size='11' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>same bytes again, in tool args</text>
+<text x='296' y='47' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 1  user · task</text>
+<rect x='304' y='38' width='2.1' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.1' y='48' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>81</text>
+<text x='296' y='68' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 2  model · read_file request</text>
+<rect x='304' y='59' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='69' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>59</text>
+<text x='296' y='89' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 3  tool · read_file result (_filesystem.py)</text>
+<rect x='304' y='80' width='350.5' height='12' rx='2' fill='#2a4a3a'/>
+<text x='660.5' y='90' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>13.8k</text>
+<text x='296' y='110' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 4  model · read_file request</text>
+<rect x='304' y='101' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='111' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<text x='296' y='131' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 5  tool · read_file result (artifacts_test.py)</text>
+<rect x='304' y='122' width='173.4' height='12' rx='2' fill='#2a4a3a'/>
+<text x='483.4' y='132' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>6.8k</text>
+<text x='296' y='152' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 6  model · execute request (pytest)</text>
+<rect x='304' y='143' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='153' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<text x='296' y='173' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 7  tool · execute result (traceback)</text>
+<rect x='304' y='164' width='87.3' height='12' rx='2' fill='#2a4a3a'/>
+<text x='397.3' y='174' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>3.4k</text>
+<text x='296' y='194' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 8  model · edit_file request (patch)</text>
+<rect x='304' y='185' width='64.9' height='12' rx='2' fill='#9a4a2a'/>
+<text x='374.9' y='195' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>2.6k</text>
+<text x='296' y='215' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'> 9  tool · edit_file result</text>
+<rect x='304' y='206' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='216' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>25</text>
+<text x='296' y='236' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>10  model · write_file request (whole file)</text>
+<rect x='304' y='227' width='364.0' height='12' rx='2' fill='#9a4a2a'/>
+<text x='674.0' y='237' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>14.3k</text>
+<text x='296' y='257' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>11  tool · write_file result</text>
+<rect x='304' y='248' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='258' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<text x='296' y='278' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>12  model · execute request (pytest)</text>
+<rect x='304' y='269' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='279' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<text x='296' y='299' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>13  tool · execute result (pass)</text>
+<rect x='304' y='290' width='7.9' height='12' rx='2' fill='#2a4a3a'/>
+<text x='317.9' y='300' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>311</text>
+<text x='296' y='320' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>14  model · summary</text>
+<rect x='304' y='311' width='2.3' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.3' y='321' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>92</text>
+<text x='296' y='341' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>15  user · follow-up task</text>
+<rect x='304' y='332' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='342' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>60</text>
+<text x='296' y='362' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>16  model · read_file request</text>
+<rect x='304' y='353' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='363' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<text x='296' y='383' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>17  tool · read_file result (same file again)</text>
+<rect x='304' y='374' width='173.4' height='12' rx='2' fill='#2a4a3a'/>
+<text x='483.4' y='384' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>6.8k</text>
+<text x='296' y='404' font-size='10.5' fill='#5a5a5a' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>18  model · working</text>
+<rect x='304' y='395' width='2.0' height='12' rx='2' fill='#c9c6bd'/>
+<text x='312.0' y='405' font-size='10.5' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>70</text>
+</svg>
