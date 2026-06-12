@@ -7,7 +7,10 @@ Output: /tmp/compaction_demo.json
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
 
 from genkit._core._model import Message
 from genkit._core._typing import (
@@ -19,7 +22,7 @@ from genkit._core._typing import (
     ToolResponse,
     ToolResponsePart,
 )
-from genkit.plugins.middleware._compaction import CompactionConfig, _compact_messages, _truncate_text
+from compaction import CompactionConfig, _compact_messages, _truncate_text
 
 REPO = Path('/Users/jeffhuang/Desktop/genkit-middleware')
 FILE_A = (REPO / 'py/plugins/middleware/src/genkit/plugins/middleware/_filesystem.py').read_text()
@@ -77,18 +80,28 @@ def tool_res(name: str, output: str) -> Message:
     )
 
 
-# kind: prose | req | payload (bulk bytes) | dup (bulk bytes repeating earlier bulk)
+def read_file_delivery(path: str, content: str) -> Message:
+    total = content.count('\n') + (0 if content.endswith('\n') else 1)
+    wrapped = f'<read_file path="{path}" totalLines="{total}">\n{content}\n</read_file>'
+    return user(wrapped)
+
+
+# Genkit Filesystem middleware: stub tool ack + full file as a user message.
 TRANSCRIPT: list[tuple[Message, str, str]] = [
     (user('pytest is failing in plugins/middleware after the offset change. find and fix it.'),
      'user · task', 'prose'),
     (tool_req('read_file', {'file_path': 'src/.../middleware/_filesystem.py'}),
      'model · read_file request', 'req'),
-    (tool_res('read_file', FILE_A),
-     'tool · read_file result (_filesystem.py)', 'payload'),
+    (tool_res('read_file', 'File src/.../_filesystem.py read successfully. Content queued as user message.'),
+     'tool · read_file ack', 'prose'),
+    (read_file_delivery('src/.../middleware/_filesystem.py', FILE_A),
+     'user · read_file delivery (_filesystem.py)', 'payload'),
     (tool_req('read_file', {'file_path': 'tests/artifacts_test.py'}),
      'model · read_file request', 'req'),
-    (tool_res('read_file', FILE_B),
-     'tool · read_file result (artifacts_test.py)', 'payload'),
+    (tool_res('read_file', 'File tests/artifacts_test.py read successfully. Content queued as user message.'),
+     'tool · read_file ack', 'prose'),
+    (read_file_delivery('tests/artifacts_test.py', FILE_B),
+     'user · read_file delivery (artifacts_test.py)', 'payload'),
     (tool_req('execute', {'command': 'uv run pytest plugins/middleware/tests -q'}),
      'model · execute request (pytest)', 'req'),
     (tool_res('execute', PYTEST_FAIL),
@@ -111,13 +124,15 @@ TRANSCRIPT: list[tuple[Message, str, str]] = [
      'user · follow-up task', 'prose'),
     (tool_req('read_file', {'file_path': 'tests/artifacts_test.py'}),
      'model · read_file request', 'req'),
-    (tool_res('read_file', FILE_B),
-     'tool · read_file result (artifacts_test.py again)', 'payload'),
+    (tool_res('read_file', 'File tests/artifacts_test.py read successfully. Content queued as user message.'),
+     'tool · read_file ack', 'prose'),
+    (read_file_delivery('tests/artifacts_test.py', FILE_B),
+     'user · read_file delivery (same file again)', 'payload'),
     (model_text('Adding a test that passes offset as a string and asserts the coercion.'),
      'model · working', 'prose'),
 ]
 
-CFG = CompactionConfig()  # library defaults: 1500 out / 400 in / keep 6 / preview 120
+CFG = CompactionConfig()
 
 
 def msg_chars(m: Message) -> int:
@@ -135,7 +150,6 @@ def msg_chars(m: Message) -> int:
 
 
 def offload_pointer(text: str, tool: str) -> str:
-    # mirrors Compaction.wrap_tool output format exactly
     preview = text[: CFG.preview_chars].rstrip()
     name = f'tool-output/{tool}/ref.txt'
     return (
@@ -179,6 +193,8 @@ clipped = _compact_messages(
     preview_chars=CFG.preview_chars,
     suffix=CFG.truncation_suffix,
     bulk_keys=frozenset(CFG.bulk_input_keys),
+    strip_filesystem_reads=CFG.strip_filesystem_reads,
+    filesystem_strip_suffix=CFG.filesystem_strip_suffix,
 )
 stage2 = [msg_chars(m) for m in clipped]
 

@@ -4,7 +4,7 @@ description: "Summarizing chat history doesn't help when the context is full of 
 pubDate: "Jun 12 2026"
 ---
 
-Summarizing old conversation history works fine for chat agents and badly for coding agents. The difference is where the tokens are. In a coding loop most of the context is file contents, and they show up twice: once in tool results, once in the tool-call arguments that stay in history after the edit lands. A `write_file` from turn 3 is still carrying its full payload at turn 40, and no summary of the conversation touches it.
+Summarizing old conversation history works fine for chat agents and badly for coding agents. The difference is where the tokens are. In a coding loop most of the context is file contents, and they show up in more than one place: tool results (tracebacks, command output), synthetic user messages (when a harness delivers `read_file` bodies that way), and tool-call arguments that stay in history after the edit lands. A `write_file` from turn 3 is still carrying its full payload at turn 40, and no summary of the conversation touches it.
 
 I read through [Open SWE](https://github.com/langchain-ai/open-swe) and the [Deep Agents](https://github.com/langchain-ai/deepagents) library it sits on to see what they actually do about this. The short version: summarization exists, but it's the last resort. Most of the savings come from never letting file bodies into the message history at all, and from clipping the ones that got in before each model call. I then implemented the same layers as middleware for Genkit's Python SDK, and used that implementation to measure exactly where the bloat sits in a typical transcript. The code and the measurement script are linked at the end.
 
@@ -12,13 +12,13 @@ I read through [Open SWE](https://github.com/langchain-ai/open-swe) and the [Dee
 
 The mechanics matter here, so it's worth being concrete. An agent loop keeps one growing message list. Every iteration, the entire list goes back to the model: the user's task, every tool call the model made, every tool result that came back. Nothing falls out on its own.
 
-Here is that list for a small, completely ordinary task: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up request from the user. Eighteen messages. Each bar is one message, drawn to scale by character count. The file bodies are real files from the Genkit repo; the transcript shape is constructed, and every number comes from running it through the actual middleware code.
+Here is that list for a small, completely ordinary task: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up request from the user. Twenty-one messages. The transcript uses Genkit's `Filesystem` middleware shape: `read_file` returns a one-line tool ack, and the file body arrives on the next turn as a user message wrapped in `<read_file>…</read_file>`. Each bar is one message, drawn to scale by character count. The file bodies are real files from the Genkit repo; every number comes from running the transcript through the actual middleware code.
 
-![Per-message sizes of an 18-message coding agent transcript. A handful of tool results and tool arguments dwarf all the prose.](/figures/compaction-anatomy.svg)
+![Per-message sizes of a 21-message coding agent transcript. File deliveries and tool arguments dwarf all the prose.](/figures/compaction-anatomy.svg)
 
-A few things jump out. The prose is invisible: the task, the model's commentary, the small tool acks are all under 100 characters each, slivers at this scale. Three tool results (two `read_file` calls and a traceback) account for 24k characters. And the two rust-colored bars are the part summarization can never reach: message 8 carries a 2.6k patch in `edit_file` arguments, and message 10 carries the *entire updated file*, 14.3k characters, as the `content` argument of a `write_file` call. The file is already on disk at that point. Those bytes ride along on every subsequent model call anyway.
+A few things jump out. The prose is invisible: the task, the model's commentary, the `read_file` acks are all under 100 characters each, slivers at this scale. The green bars are bulk entering the history: two `<read_file>` user deliveries (about 21k characters between them) plus a pytest traceback in a tool result. The rust-colored bars are the part summarization can never reach on its own: an `edit_file` request carrying a 2.6k patch in its arguments, and a `write_file` request carrying the entire updated file (about 15k characters) as `content`. The file is already on disk at that point. Those bytes ride along on every subsequent model call anyway.
 
-Total: 48.7k characters, roughly 12k tokens, for a task a human would describe in one sentence. By message 18 the model needs almost none of it. That ratio is the whole problem, and it gets worse linearly with every tool call.
+Total: about 50.5k characters, roughly 12k tokens, for a task a human would describe in one sentence. By message 21 the model needs almost none of it. That ratio is the whole problem, and it gets worse linearly with every tool call.
 
 ## What Open SWE does at the tool boundary
 
@@ -64,12 +64,43 @@ The ordering tells you the philosophy. The layers fire cheapest first:
 
 Summarization is the only layer that costs a model call and the only one that loses information you can't point back to. Both libraries treat it accordingly.
 
+## Why `read_file` shows up as a user message
+
+Genkit's `Filesystem` middleware does something that looks wrong until you see the full stack. When the model calls `read_file`, the tool returns a short string ("read successfully, see below"). The actual file body is queued and injected before the next model turn as a **user** message:
+
+```text
+tool:  File auth.py read successfully. Content queued as user message.
+user:  <read_file path="auth.py" totalLines="412">
+       ...entire file...
+       </read_file>
+model: I see the bug on line 42...
+```
+
+Moving the payload from tool to user does **not** shrink the context window by itself. If both messages stay in history forever, you pay for the bytes either way. The trick is what it unlocks elsewhere:
+
+**Tool results stay small and string-shaped.** Provider APIs expect tool output to be a compact acknowledgment. Images need `media` parts, which fit the user channel more cleanly than a tool result blob.
+
+**Parallel reads batch into one delivery.** Multiple `read_file` calls in the same tool round append to the same queued user message instead of producing three separate fat tool responses.
+
+**Re-reads can dedup.** When the file has not changed, the tool can return a stub ("unchanged since last read, refer to the earlier delivery") without queueing another copy. The canonical body lives in the earlier `<read_file>` block.
+
+**Compaction can strip old deliveries.** That last point is the pairing that makes the pattern worth it. `Compaction` recognizes `<read_file>` user messages outside the keep window and replaces them with path stubs:
+
+```text
+<read_file path="auth.py">…[stripped] (14,521 chars; file is on disk, call read_file to retrieve)</read_file>
+```
+
+The file is still on disk. The model can call `read_file` again if it genuinely needs the body back. You are not deleting information, you are refusing to re-send it on every subsequent turn.
+
+Without that strip pass, queuing file bodies as user messages would just move the bloat to a different role. With it, the delivery channel and the compaction layer are designed together.
+
 ## A Genkit implementation
 
-Genkit's middleware plugin already had one of these layers: the `Filesystem` middleware queues `read_file` content as user messages so the tool response itself stays small, and the `Artifacts` middleware gives sessions a `read_artifact` / `write_artifact` store. What was missing was the middle of the stack, so I added a `Compaction` middleware that implements layers 2 and 3.
+Genkit's official middleware plugin already has two pieces of this stack: `Filesystem` (the read delivery trick above) and `Artifacts` (`read_artifact` / `write_artifact` for side-channel storage). History compaction across both tool messages and those synthetic user deliveries is a **recipe**, not part of the official plugin: copy [`compaction.py`](https://github.com/jeffdh5/genkit-compaction-recipe/blob/main/compaction.py) from [jeffdh5/genkit-compaction-recipe](https://github.com/jeffdh5/genkit-compaction-recipe) into your project.
 
 ```python
-from genkit.plugins.middleware import Artifacts, Compaction, Filesystem
+from compaction import Compaction
+from genkit.plugins.middleware import Artifacts, Filesystem
 
 await ai.generate(
     prompt='Fix the failing test in auth.py',
@@ -98,24 +129,25 @@ return MultipartToolResponse(
 
 Pairing this with `Artifacts()` matters: the model can call `read_artifact` if it genuinely needs the full output again, which is the same recoverability property Deep Agents gets from its backend files.
 
-`wrap_generate` runs before each model call and clips messages outside the `keep_recent_messages` window. Tool request inputs lose their bulky fields (`content`, `old_string`, `patch`, and so on, the same set Deep Agents targets), and oversized tool response outputs get cut to a preview plus a character count.
+`wrap_generate` runs before each model call and compacts messages outside the `keep_recent_messages` window. That pass does three things: strip old `<read_file>` user deliveries to path stubs, clip bulky tool request inputs (`content`, `old_string`, `patch`, and so on), and truncate oversized tool response outputs to a preview plus a character count.
 
 Here is the transcript from the first figure again, run through this implementation at its default settings, drawn at the same scale:
 
-![The same transcript at three stages: 48.7k characters raw, 18.8k after offloading tool outputs to artifacts, 2.5k after also clipping old tool arguments.](/figures/compaction-stages.svg)
+![The same transcript at three stages: 50.5k characters raw, 47.3k after offloading one large tool output, 9.2k after stripping read deliveries and clipping old tool arguments.](/figures/compaction-stages.svg)
 
-The middle bar is the interesting one. Offloading tool outputs alone gets you from 48.7k to 18.8k, and it's tempting to stop there. But look at what survives: almost all of the remaining bulk is that one `write_file` argument, the rust segment, which no amount of output-side work will ever touch. Only the history-clipping pass removes it, taking the total to 2.5k. If you implement just one of these layers, the output side feels like the obvious choice; the figure is the argument for why you need both.
+The middle stage is a useful sanity check. With `Filesystem` in the stack, offloading tool outputs barely moves the total (50.5k down to 47.3k) because the file bodies were never in tool results to begin with. Only the pytest traceback gets offloaded. The real drop happens in the third stage: old `<read_file>` deliveries shrink to about 130 characters each, and the `write_file` argument clip removes the 15k rust bar. What remains in the keep window is prose, recent reads, and small acks.
 
-A note on what clipping costs: nothing visible, in my testing so far, though my testing is unit tests plus this measurement, not long production runs. The clipped arguments belong to edits that already landed. If the model wants the current state of a file, re-reading it is both cheaper and more correct than trusting a stale argument in history.
+A note on what stripping costs: nothing visible in my testing so far, though that is unit tests plus this measurement, not long production runs. The stripped deliveries belong to files already on disk. If the model wants the current state, `read_file` is both cheaper and more correct than trusting a stale copy in history.
 
-Four unit tests cover the truncation logic, the keep-window behavior, and the artifact offload. They run with:
+Tests live in the recipe repo. They run with:
 
 ```bash
-cd py && uv run pytest plugins/middleware/tests/compaction_test.py -q --no-cov
+git clone https://github.com/jeffdh5/genkit-compaction-recipe
+cd genkit-compaction-recipe && uv sync && uv run pytest -q
 ```
 
 ## What's missing
 
 `Compaction` implements the structural layers and stops there. Deep Agents also has token-fraction triggers (clip at 85% of the window rather than a fixed message count), LLM-written summaries of evicted history, and the conversation log file that makes summarization reversible. Those belong in a separate summarization middleware, and the structural layers are the right place to start anyway: they're cheap, they're lossless in practice, and they delay the day you need the expensive layer at all.
 
-Sources: Open SWE's [`agent/middleware/tool_artifact.py`](https://github.com/langchain-ai/open-swe) and `agent/server.py`; Deep Agents' [`middleware/summarization.py`](https://github.com/langchain-ai/deepagents) and `graph.py`. The Genkit middleware is `py/plugins/middleware/src/genkit/plugins/middleware/_compaction.py` in [genkit](https://github.com/firebase/genkit). The figures were generated by [a script](https://github.com/jeffdh5/agent-eng-blog/tree/main/scripts) that builds the transcript above and runs it through the real middleware functions.
+Sources: Open SWE's [`agent/middleware/tool_artifact.py`](https://github.com/langchain-ai/open-swe) and `agent/server.py`; Deep Agents' [`middleware/summarization.py`](https://github.com/langchain-ai/deepagents) and `graph.py`. The compaction recipe is [jeffdh5/genkit-compaction-recipe](https://github.com/jeffdh5/genkit-compaction-recipe) (not part of official [genkit](https://github.com/firebase/genkit)). The figures were generated by [a script](https://github.com/jeffdh5/agent-eng-blog/tree/main/scripts) that builds the transcript above and runs it through the recipe's compaction functions.
