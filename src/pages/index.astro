@@ -47,11 +47,18 @@ const posts = (await getCollection('blog'))
 					Some posts dig into one open-source project; others are shorter notes on a
 					single idea. Field notes from the work, not a map of the territory.
 				</p>
-				<p class="page-lead page-lead-last">
-					I spent five years on Firebase Functions making serverless feel simple;
-					agents are the same job again, at the very beginning of figuring out
-					what's possible, and I'm writing this while we build
-					<a href="https://genkit.dev/">Genkit</a> and watch the patterns emerge.
+				<p class="page-lead page-lead-muted">
+					I spent five years on Firebase Functions and Extensions making serverless feel
+					simple.
+				</p>
+				<p class="page-lead page-lead-muted">Agents are the same job again.</p>
+				<p class="page-lead page-lead-muted">
+					The engineering world is rapidly learning what's possible with foundational
+					models and well-designed harnesses. I'm observing and distilling what I
+					learn as I build <a href="https://genkit.dev/">Genkit</a>.
+				</p>
+				<p class="page-lead page-lead-muted page-lead-last">
+					Useful insights from the edge of agentic engineering, written as I go.
 				</p>
 			</section>
 
@@ -135,9 +142,19 @@ const posts = (await getCollection('blog'))
 		margin-top: 0.75rem;
 	}
 
-	.page-lead-last {
+	.page-lead-muted {
 		color: var(--text-muted);
 		font-size: 0.9375rem;
+	}
+
+	.page-lead-muted a {
+		color: var(--text-muted);
+		text-decoration: underline;
+		text-underline-offset: 0.12em;
+	}
+
+	.page-lead-muted a:hover {
+		color: var(--text);
 	}
 
 	.recent {
