@@ -1,0 +1,30 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>Agent Engineering Notes</h1>
+			<p>
+				Small experiments answering what the agent-engineering crowd is actually arguing
+				about. Each post takes one live debate from the timeline, turns it into a probing
+				engineering question, and answers it by building the smallest possible thing —
+				usually a <a href="https://genkit.dev">Genkit</a> app — and reporting what really
+				happened. Real code, real numbers, a takeaway you can use.
+			</p>
+			<p>
+				Start with the <a href="/blog/">writeups</a>.
+			</p>
+		</main>
+		<Footer />
+	</body>
+</html>

@@ -1,0 +1,3 @@
+name = "agent-eng-blog"
+compatibility_date = "2026-06-12"
+pages_build_output_dir = "dist"
