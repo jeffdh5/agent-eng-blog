@@ -20,13 +20,16 @@ const posts = (await getCollection('blog'))
 		<Header />
 		<main>
 			<section class="hero">
-				<p class="page-eyebrow">Staff engineer notes</p>
-				<h1>Agent engineering,<br />measured.</h1>
+				<p class="page-eyebrow">Agent infrastructure notes</p>
+				<h1>Agents are having their<br />serverless moment.</h1>
 				<p class="page-lead">
-					The agent-eng timeline argues in screenshots. I take one live debate, turn it
-					into a probing question, and answer it by building the smallest thing that
-					produces evidence — usually a <a href="https://genkit.dev">Genkit</a> app.
-					Real code, real numbers, a takeaway you can use.
+					I'm Jeff Huang — founding team of <a href="https://genkit.dev">Genkit</a>,
+					where I lead the Python SDK. Before that I spent years building Firebase's
+					serverless platform (Functions &amp; Extensions): hiding GCP's plumbing behind
+					ergonomic SDKs, making the happy path one function, leaving hooks for everyone
+					else. Agent harnesses are the same problem all over again — and most teams are
+					hand-rolling what will obviously become the platform layer. This is where I
+					write up the design decisions as we make them.
 				</p>
 			</section>
 

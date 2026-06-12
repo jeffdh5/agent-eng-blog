@@ -1,6 +1,6 @@
 // Place any global data in this file.
 // You can import this data from anywhere in your site by using the `import` keyword.
 
-export const SITE_TITLE = 'Agent Engineering Notes';
+export const SITE_TITLE = 'Jeff Huang';
 export const SITE_DESCRIPTION =
-	'Building small things to answer the questions the agent-engineering crowd is actually arguing about. Code, experiments, and measured takeaways.';
+	'Notes on designing agent infrastructure — harness design, SDK abstractions, and what building serverless platforms taught me about this moment. From the founding team of Genkit.';

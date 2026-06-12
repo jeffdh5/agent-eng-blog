@@ -4,22 +4,33 @@ import Layout from '../layouts/BlogPost.astro';
 
 <Layout
 	title="About"
-	description="What this blog is and how it's written."
+	description="Who I am and why I write this."
 	pubDate={new Date('Jun 12 2026')}
 >
 	<p>
-		I'm a staff engineer working on agent infrastructure. This blog is where I write up
-		small experiments that answer questions the agent-engineering crowd is actually arguing
-		about — tool sprawl, harness design, routing, memory schemas, the stuff that shows up
-		in timelines but rarely gets measured.
+		I'm Jeff Huang. I was on the founding team of <a href="https://genkit.dev">Genkit</a>,
+		Google's open-source SDK for building and deploying agent harnesses, and I lead Genkit
+		Python. Before that I worked on Firebase's serverless platform — Cloud Functions and
+		Extensions — spending years on the same core problem: take infrastructure that's
+		genuinely hard, hide the parts developers shouldn't have to care about, make the happy
+		path nearly effortless, and leave fine-grained hooks for everyone who needs to go
+		deeper.
 	</p>
 	<p>
-		Each post follows the same shape: a live trend, a probing engineering question, the
-		smallest app that produces evidence, and what actually happened when I ran it. No
-		hand-waved snippets, no invented numbers.
+		Agent infrastructure is that problem again. Interrupts and resumption, tool approval,
+		fallbacks, session state, middleware — most teams are hand-rolling all of it, the way
+		everyone hand-rolled deployment scripts before serverless. My day job is deciding where
+		those abstraction boundaries go, across languages, with real users hitting the API. This
+		blog is where I narrate those decisions: the alternatives we considered, the tradeoffs
+		that decided it, and the experiments I run when the timeline argues about something
+		measurable.
 	</p>
 	<p>
-		Code lives on <a href="https://github.com/jeffdh5">GitHub</a>. Source for this site is
+		Two rules: code snippets come from real, committed code, and numbers come from runs that
+		actually happened.
+	</p>
+	<p>
+		Find me on <a href="https://github.com/jeffdh5">GitHub</a>. Source for this site is
 		<a href="https://github.com/jeffdh5/agent-eng-blog">here</a>.
 	</p>
 </Layout>
