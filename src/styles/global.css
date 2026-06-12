@@ -110,6 +110,18 @@ img {
 	height: auto;
 }
 
+.about-photo {
+	margin: 0 0 1.5rem;
+}
+
+.about-photo img {
+	width: 96px;
+	height: 96px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 1px solid var(--border);
+}
+
 hr {
 	border: none;
 	border-top: 1px solid var(--border);

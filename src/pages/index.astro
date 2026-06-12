@@ -20,6 +20,20 @@ const posts = (await getCollection('blog'))
 		<Header />
 		<main>
 			<section class="hero">
+				<div class="hero-author">
+					<img
+						src="/jeff-huang.png"
+						alt="Jeff Huang"
+						class="hero-photo"
+						width="80"
+						height="80"
+						loading="eager"
+					/>
+					<div>
+						<p class="hero-name">Jeff Huang</p>
+						<p class="hero-role">Genkit Python · ex-Firebase serverless</p>
+					</div>
+				</div>
 				<p class="page-eyebrow">Agentic engineering</p>
 				<h1>A journal on building agents,<br />written as I go.</h1>
 				<p class="page-lead">I write down what I'm learning as agentic engineering takes shape.</p>
@@ -71,6 +85,35 @@ const posts = (await getCollection('blog'))
 	.hero {
 		margin-bottom: 3.5rem;
 		max-width: var(--measure);
+	}
+
+	.hero-author {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
+
+	.hero-photo {
+		width: 80px;
+		height: 80px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 1px solid var(--border);
+	}
+
+	.hero-name {
+		font-family: var(--font-serif);
+		font-size: 1.125rem;
+		font-weight: 500;
+		margin: 0 0 0.15rem;
+		letter-spacing: -0.01em;
+	}
+
+	.hero-role {
+		font-size: 0.8125rem;
+		color: var(--text-muted);
+		margin: 0;
 	}
 
 	.hero h1 {
