@@ -1,8 +1,14 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
 ---
 
 <!doctype html>
@@ -13,18 +19,83 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	<body>
 		<Header />
 		<main>
-			<h1>Agent Engineering Notes</h1>
-			<p>
-				Small experiments answering what the agent-engineering crowd is actually arguing
-				about. Each post takes one live debate from the timeline, turns it into a probing
-				engineering question, and answers it by building the smallest possible thing —
-				usually a <a href="https://genkit.dev">Genkit</a> app — and reporting what really
-				happened. Real code, real numbers, a takeaway you can use.
-			</p>
-			<p>
-				Start with the <a href="/blog/">writeups</a>.
-			</p>
+			<section class="hero">
+				<p class="page-eyebrow">Staff engineer notes</p>
+				<h1>Agent engineering,<br />measured.</h1>
+				<p class="page-lead">
+					The agent-eng timeline argues in screenshots. I take one live debate, turn it
+					into a probing question, and answer it by building the smallest thing that
+					produces evidence — usually a <a href="https://genkit.dev">Genkit</a> app.
+					Real code, real numbers, a takeaway you can use.
+				</p>
+			</section>
+
+			<section class="recent">
+				<div class="section-head">
+					<h2>Recent</h2>
+					<a href="/blog/" class="view-all">All writing →</a>
+				</div>
+				<ul class="post-list">
+					{
+						posts.map((post) => (
+							<li>
+								<a href={`/blog/${post.id}/`}>
+									<h3 class="post-title">{post.data.title}</h3>
+									<p class="post-meta">
+										<FormattedDate date={post.data.pubDate} />
+									</p>
+									{post.data.description && (
+										<p class="post-desc">{post.data.description}</p>
+									)}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	.hero {
+		margin-bottom: 3.5rem;
+		max-width: var(--measure);
+	}
+
+	.hero h1 {
+		margin-bottom: 1.25rem;
+	}
+
+	.recent {
+		max-width: var(--measure-wide);
+	}
+
+	.section-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
+	}
+
+	.section-head h2 {
+		font-size: 0.75rem;
+		font-family: var(--font-sans);
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--text-faint);
+		margin: 0;
+	}
+
+	.view-all {
+		font-size: 0.8125rem;
+		color: var(--text-muted);
+		text-decoration: none;
+	}
+
+	.view-all:hover {
+		color: var(--text);
+	}
+</style>
