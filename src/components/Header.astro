@@ -5,7 +5,9 @@ import HeaderLink from './HeaderLink.astro';
 
 <header>
 	<nav>
-		<a href="/" class="site-title">{SITE_TITLE}</a>
+		<a href="/" class="site-title"
+			>{SITE_TITLE} <span class="site-byline">by Jeff Huang</span></a
+		>
 		<div class="nav-links">
 			<HeaderLink href="/blog">Writing</HeaderLink>
 			<HeaderLink href="/about">About</HeaderLink>
@@ -40,6 +42,14 @@ import HeaderLink from './HeaderLink.astro';
 
 	.site-title:hover {
 		color: var(--text-muted);
+	}
+
+	.site-byline {
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+		font-weight: 400;
+		color: var(--text-faint);
+		margin-left: 0.35rem;
 	}
 
 	.nav-links {
