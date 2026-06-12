@@ -1,19 +1,13 @@
 ---
 title: "What this is"
-description: "Harness teardowns: what open-source agents converge on, distilled into best practices, implemented with Genkit."
+description: "Learning harness engineering in public — patterns from real agents, distilled into examples you can use."
 pubDate: "Jun 12 2026"
 ---
 
-I was on the founding team of [Genkit](https://genkit.dev) and lead its Python SDK. Before that I spent years on Firebase's serverless platform, doing for GCP infrastructure what agent SDKs are now doing for harnesses: abstract the plumbing, make the happy path easy, expose hooks where behavior needs to bend.
+I spend my days on harness engineering — I lead the Python SDK for [Genkit](https://genkit.dev) and was on its founding team — which means a lot of my time goes into reading the harnesses people actually ship: Claude Code, Goose, Open SWE, the internal agents that companies like Stripe, Ramp, and Coinbase describe on their engineering blogs. Before this I spent years on Firebase's serverless platform, which turns out to have been the same job, one layer down.
 
-If you build SDKs, you end up reading whatever people hand-roll on top of them. So I read agent harnesses — Claude Code, Goose, Open SWE, and the internal agents that companies like Stripe, Ramp, and Coinbase describe on their engineering blogs. Read enough of them and the pattern is hard to miss: independently built systems keep converging on the same pieces. Sandboxed execution, curated toolsets, subagent orchestration, middleware around the loop.
+The longer I read, the more the same patterns keep showing up — sandboxed execution, curated toolsets, subagent orchestration, middleware around the loop. Independently built systems arriving at the same pieces is usually a sign something real is settling out, and it feels worth tracking out loud.
 
-That convergence is the story of this blog, and most posts will follow the same arc:
-
-1. **Read** a real harness — open source or described in public — closely enough to understand a design decision it made.
-2. **Distill** the pattern into a best practice: what problem it solves, when it applies, what it costs.
-3. **Build** it with Genkit, with real code and a runnable example, so the practice is something you can use rather than nod at.
-
-My core claim, which this blog will spend its life earning: most of a harness is undifferentiated plumbing, and the interesting question isn't whether to own it — it's where the abstraction boundary goes. We've been here before. Last time it was called serverless.
+So that's this blog: exploring in public. I pay attention to the patterns as they emerge, share what I'm learning, and distill it into small code snippets and easy-to-understand examples — usually with Genkit — that you can take into your own agents. Working notes, not grand theory. When I show code, it runs; when I show numbers, they came from a real run.
 
 More soon.
