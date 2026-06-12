@@ -3,4 +3,4 @@
 
 export const SITE_TITLE = 'Jeff Huang';
 export const SITE_DESCRIPTION =
-	'Personal journal on agentic engineering by Jeff Huang. Google (Genkit), ex-Uber, five years on Firebase Functions.';
+	'A swipe file on agentic engineering. Best practices from open-source projects and building Genkit. Jeff Huang, Google, ex-Uber.';
