@@ -3,4 +3,4 @@
 
 export const SITE_TITLE = 'Jeff Huang';
 export const SITE_DESCRIPTION =
-	'Notes on building coding agent harnesses: read open implementations like Open SWE, measure the failure modes, implement the patterns with Genkit. By Jeff Huang, Genkit Python lead.';
+	'Personal journal on agentic engineering by Jeff Huang. Field notes on infrastructure, patterns, and what I am learning while building.';
