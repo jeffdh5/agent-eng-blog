@@ -12,25 +12,29 @@ I spent a few days studying the [Open SWE](https://github.com/langchain-ai/open-
 
 ## What the message history actually looks like
 
-The mechanics matter here, so it is worth being concrete. An agent loop keeps one growing message list. Every iteration, the entire list goes back to the model: the user's task, every tool call the model made, every tool result that came back. Nothing falls out on its own.
+The mechanics matter here, so it is worth being concrete. An agent loop keeps one growing `messages` array. Every iteration, the entire array goes back to the model: the user's task, every tool call the model made, every tool result that came back. Nothing falls out on its own. Compaction is surgery on that array before the next `generate()` call.
 
-Here is a real run: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up from the user. Twenty-one messages. The figure below shows the actual wire format (what lands in each message slot), which messages are hot, and what `wrap_generate` does to the prefix before the next model call.
+Here is a real run: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up from the user. Twenty-one slots in `messages`. The figure below is the array itself: each index drawn to token weight (taller slot = more context burned), with hot zones highlighted.
 
-![The wire format for a 21-message coding agent run, with hot zones highlighted and before/after compaction on the worst offenders.](/figures/compaction-wire.svg)
+![The messages array at turn 21: each index sized by token weight, hot zones visible, and the same array after wrap_generate compacts the prefix.](/figures/compaction-messages-array.svg)
 
-Start at the top: `read_file` returns a one-line tool ack, then the full file body queues as a **user** message wrapped in `<read_file>…</read_file>`. That pattern is the harness shape. The file is not gone from context, it just moved channels.
+Read it left to right as two snapshots of the same list. On the left, `messages` at turn 21: what you would pass verbatim to the model. Most slots are thin slivers (under 100 characters). A handful are towers: `messages[3]` and `messages[6]` are `<read_file>` user deliveries, `messages[8]` is a pytest traceback, `messages[9]` and `messages[11]` are tool-call arguments still carrying patches and whole files the agent already wrote to disk. Those indices are the hot zones. They dominate the ~12k-token budget even though the task is one sentence.
 
-The timeline in the middle is the full list at turn 21. Green is file or log bulk entering the history. Rust is dead weight in tool-call arguments: a patch or whole file that already landed on disk but still rides along in the model's tool request. The dashed line is the keep window: messages 16–21 stay verbatim; everything above it is fair game for compaction.
+On the right, the same array after `wrap_generate`. The prefix slots shrink; `messages[15]` onward (the keep window) stay verbatim. The array is still 21 elements long, but the total drops from about 50.5k characters to 9.1k. That is what compaction implements: mutate the `messages` list in place before the model sees it, not a separate summarization channel off to the side.
 
-The bottom panels zoom in on the worst offenders. Message #4 is a 14.5k-character read delivery truncated to a short preview. Message #12 is a `write_file` whose `content` argument still carries the whole file even though the write already succeeded. That is the rust bar summarization cannot touch on its own.
+The call site is literally:
 
-For the same transcript drawn purely to scale by character count:
+```python
+response = await ai.generate(messages=messages, ...)
+```
+
+Every tool round appends more slots. Until something compacts the prefix, they all ride along.
+
+For the same array drawn as a flat bar chart (easier to compare slot sizes at a glance):
 
 ![Per-message sizes of a 21-message coding agent transcript. File deliveries and tool arguments dwarf all the prose.](/figures/compaction-anatomy.svg)
 
-A few things jump out at this scale. The prose is invisible: the task, the model's commentary, the `read_file` acks are all under 100 characters each, slivers. The green bars are bulk entering the history: two `<read_file>` user deliveries (about 21k characters between them) plus a pytest traceback in a tool result. The rust-colored bars are conversation summarization's blind spot: an `edit_file` request carrying a 2.6k patch in its arguments, and a `write_file` request carrying the entire updated file (about 15k characters) as `content`.
-
-Total: about 50.5k characters, roughly 12k tokens, for a task a human would describe in one sentence. By message 21 the model needs almost none of it. That ratio is the whole problem, and it gets worse linearly with every tool call.
+Total: about 50.5k characters, roughly 12k tokens, for a task a human would describe in one sentence. By `messages[20]` the model needs almost none of the bytes in `messages[0]` through `messages[14]`. That ratio is the whole problem, and it gets worse linearly with every tool call.
 
 ## What Open SWE does at the tool boundary
 
@@ -164,7 +168,7 @@ Tell your coding agent to copy `compaction.py` from the recipe repo into your ap
 
 ## What it buys you
 
-The wire figure in Part 1 shows compaction on individual messages. Here is the same transcript aggregated, run through the structural pass at its default settings (`keep_recent_messages=6`), drawn to scale:
+The messages-array figure in Part 1 shows compaction slot by slot. Here is the same list aggregated into one bar per stage:
 
 ![The same transcript at two stages: 50.5k characters raw, then structurally compacted with old read deliveries and tool arguments clipped.](/figures/compaction-stages.svg)
 

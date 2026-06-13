@@ -1,0 +1,176 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 920' role='img' aria-label='The messages array at turn 21, with per-index token heat, before and after compaction.'>
+<rect width='1040' height='920' fill='#f6f5f2'/>
+<text x='24' y='30' font-size='15' fill='#141414' font-family='Inter, system-ui, sans-serif'>The messages array is where the context lives</text>
+<text x='24' y='50' font-size='11' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>Every model call sends the entire list. Slot height is drawn to token weight (~chars/4). Real 21-message run.</text>
+<rect x='24' y='58' width='10' height='10' rx='2' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.6'/>
+<text x='38' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>cool</text>
+<rect x='84' y='58' width='10' height='10' rx='2' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='0.6'/>
+<text x='98' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>file/log bulk</text>
+<rect x='198' y='58' width='10' height='10' rx='2' fill='#c47a5a' stroke='#9a4a2a' stroke-width='0.6'/>
+<text x='212' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>tool args bloat</text>
+<text x='24' y='88' font-size='13' fill='#141414' font-family='Inter, system-ui, sans-serif'>messages at turn 21</text>
+<text x='24' y='104' font-size='10' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>passed verbatim to the model</text>
+<text x='496' y='88' font-size='11' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>50.5k chars</text>
+<text x='38' y='135' font-size='10' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>messages = [</text>
+<rect x='38' y='142' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='155' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[0] user · task</text>
+<text x='482' y='155' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>81</text>
+<rect x='38' y='167' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='46' y='180' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[1] model · tool_call read_file</text>
+<text x='482' y='180' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>59</text>
+<rect x='38' y='192' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='205' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[2] tool · ack (queued)</text>
+<text x='482' y='205' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>78</text>
+<rect x='38' y='217' width='452' height='93' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='1.4'/>
+<text x='46' y='230' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[3] user · &lt;read_file&gt; body</text>
+<text x='482' y='230' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>14.5k</text>
+<text x='46' y='245' font-size='8.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>role=user · hot slot</text>
+<rect x='38' y='313' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='46' y='326' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[4] model · tool_call read_file</text>
+<text x='482' y='326' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<rect x='38' y='338' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='351' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[5] tool · ack (queued)</text>
+<text x='482' y='351' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>79</text>
+<rect x='38' y='363' width='452' height='56' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='1.4'/>
+<text x='46' y='376' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[6] user · &lt;read_file&gt; body</text>
+<text x='482' y='376' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>6.9k</text>
+<text x='46' y='391' font-size='8.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>role=user · hot slot</text>
+<rect x='38' y='422' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='46' y='435' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[7] model · tool_call execute</text>
+<text x='482' y='435' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<rect x='38' y='447' width='452' height='38' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='1.4'/>
+<text x='46' y='460' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[8] tool · pytest traceback</text>
+<text x='482' y='460' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>3.4k</text>
+<text x='46' y='475' font-size='8.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>role=tool · hot slot</text>
+<rect x='38' y='488' width='452' height='34' rx='4' fill='#c47a5a' stroke='#9a4a2a' stroke-width='1.4'/>
+<text x='46' y='501' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[9] model · tool_call edit_file</text>
+<text x='482' y='501' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>2.6k</text>
+<rect x='38' y='525' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='538' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[10] tool · ack</text>
+<text x='482' y='538' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>25</text>
+<rect x='38' y='550' width='452' height='96' rx='4' fill='#c47a5a' stroke='#9a4a2a' stroke-width='1.4'/>
+<text x='46' y='563' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[11] model · tool_call write_file</text>
+<text x='482' y='563' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>15.0k</text>
+<text x='46' y='578' font-size='8.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>role=model · hot slot</text>
+<rect x='38' y='649' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='662' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[12] tool · ack</text>
+<text x='482' y='662' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<rect x='38' y='674' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='46' y='687' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[13] model · tool_call execute</text>
+<text x='482' y='687' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<rect x='38' y='699' width='452' height='23' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='0.8'/>
+<text x='46' y='712' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[14] tool · pytest pass</text>
+<text x='482' y='712' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>311</text>
+<rect x='36' y='724' width='456' height='24' fill='#f3f1ec' rx='3'/>
+<rect x='38' y='725' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='738' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[15] model · summary</text>
+<text x='482' y='738' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>92</text>
+<rect x='36' y='749' width='456' height='24' fill='#f3f1ec' rx='3'/>
+<rect x='38' y='750' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='763' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[16] user · follow-up</text>
+<text x='482' y='763' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>60</text>
+<rect x='36' y='774' width='456' height='24' fill='#f3f1ec' rx='3'/>
+<rect x='38' y='775' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='46' y='788' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[17] model · tool_call read_file</text>
+<text x='482' y='788' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<rect x='36' y='799' width='456' height='24' fill='#f3f1ec' rx='3'/>
+<rect x='38' y='800' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='813' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[18] tool · ack (queued)</text>
+<text x='482' y='813' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>79</text>
+<rect x='36' y='824' width='456' height='58' fill='#f3f1ec' rx='3'/>
+<rect x='38' y='825' width='452' height='56' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='1.4'/>
+<text x='46' y='838' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[19] user · &lt;read_file&gt; body</text>
+<text x='482' y='838' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>6.9k</text>
+<text x='46' y='853' font-size='8.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>role=user · hot slot</text>
+<rect x='36' y='883' width='456' height='24' fill='#f3f1ec' rx='3'/>
+<rect x='38' y='884' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='46' y='897' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[20] model · working</text>
+<text x='482' y='897' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>70</text>
+<text x='38' y='920' font-size='10' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>]</text>
+<path d='M 30 134 L 24 134 L 24 919 L 30 919' fill='none' stroke='#d4d1c9' stroke-width='1.5'/>
+<path d='M 498 134 L 504 134 L 504 919 L 498 919' fill='none' stroke='#d4d1c9' stroke-width='1.5'/>
+<text x='536' y='88' font-size='13' fill='#141414' font-family='Inter, system-ui, sans-serif'>messages after wrap_generate</text>
+<text x='536' y='104' font-size='10' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>prefix compacted; [15:] keep window verbatim</text>
+<text x='1008' y='88' font-size='11' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>9.1k chars</text>
+<text x='550' y='135' font-size='10' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>messages = [</text>
+<rect x='550' y='142' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='155' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[0] user · task</text>
+<text x='994' y='155' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>81</text>
+<rect x='550' y='167' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='558' y='180' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[1] model · tool_call read_file</text>
+<text x='994' y='180' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>59</text>
+<rect x='550' y='192' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='205' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[2] tool · ack (queued)</text>
+<text x='994' y='205' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>78</text>
+<rect x='548' y='216' width='456' height='25' fill='#eef3f7' rx='3'/>
+<rect x='550' y='217' width='452' height='23' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='0.8'/>
+<text x='558' y='230' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[3] user · &lt;read_file&gt; body</text>
+<text x='994' y='230' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>153</text>
+<rect x='550' y='243' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='558' y='256' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[4] model · tool_call read_file</text>
+<text x='994' y='256' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<rect x='550' y='268' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='281' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[5] tool · ack (queued)</text>
+<text x='994' y='281' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>79</text>
+<rect x='548' y='292' width='456' height='25' fill='#eef3f7' rx='3'/>
+<rect x='550' y='293' width='452' height='23' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='0.8'/>
+<text x='558' y='306' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[6] user · &lt;read_file&gt; body</text>
+<text x='994' y='306' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>152</text>
+<rect x='550' y='319' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='558' y='332' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[7] model · tool_call execute</text>
+<text x='994' y='332' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<rect x='548' y='343' width='456' height='25' fill='#eef3f7' rx='3'/>
+<rect x='550' y='344' width='452' height='23' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='0.8'/>
+<text x='558' y='357' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[8] tool · pytest traceback</text>
+<text x='994' y='357' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>152</text>
+<rect x='548' y='369' width='456' height='27' fill='#eef3f7' rx='3'/>
+<rect x='550' y='370' width='452' height='25' rx='4' fill='#c47a5a' stroke='#9a4a2a' stroke-width='0.8'/>
+<text x='558' y='383' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[9] model · tool_call edit_file</text>
+<text x='994' y='383' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>372</text>
+<rect x='550' y='398' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='411' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[10] tool · ack</text>
+<text x='994' y='411' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>25</text>
+<rect x='548' y='422' width='456' height='26' fill='#eef3f7' rx='3'/>
+<rect x='550' y='423' width='452' height='24' rx='4' fill='#c47a5a' stroke='#9a4a2a' stroke-width='0.8'/>
+<text x='558' y='436' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[11] model · tool_call write_file</text>
+<text x='994' y='436' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>222</text>
+<rect x='550' y='450' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='463' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[12] tool · ack</text>
+<text x='994' y='463' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<rect x='550' y='475' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='558' y='488' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[13] model · tool_call execute</text>
+<text x='994' y='488' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<rect x='550' y='500' width='452' height='25' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='0.8'/>
+<text x='558' y='513' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[14] tool · pytest pass</text>
+<text x='994' y='513' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>311</text>
+<rect x='550' y='528' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='541' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[15] model · summary</text>
+<text x='994' y='541' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>92</text>
+<rect x='550' y='553' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='566' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[16] user · follow-up</text>
+<text x='994' y='566' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>60</text>
+<rect x='550' y='578' width='452' height='22' rx='4' fill='#8a8880' stroke='#8a8880' stroke-width='0.8'/>
+<text x='558' y='591' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[17] model · tool_call read_file</text>
+<text x='994' y='591' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<rect x='550' y='603' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='616' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[18] tool · ack (queued)</text>
+<text x='994' y='616' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>79</text>
+<rect x='550' y='628' width='452' height='96' rx='4' fill='#6a9a7a' stroke='#2a4a3a' stroke-width='1.4'/>
+<text x='558' y='641' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[19] user · &lt;read_file&gt; body</text>
+<text x='994' y='641' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>6.9k</text>
+<text x='558' y='656' font-size='8.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>role=user · hot slot</text>
+<rect x='550' y='727' width='452' height='22' rx='4' fill='#c9c6bd' stroke='#c9c6bd' stroke-width='0.8'/>
+<text x='558' y='740' font-size='9' fill='#141414' font-family='IBM Plex Mono, ui-monospace, monospace'>[20] model · working</text>
+<text x='994' y='740' font-size='9' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>70</text>
+<text x='550' y='763' font-size='10' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>]</text>
+<path d='M 542 134 L 536 134 L 536 762 L 542 762' fill='none' stroke='#d4d1c9' stroke-width='1.5'/>
+<path d='M 1010 134 L 1016 134 L 1016 762 L 1010 762' fill='none' stroke='#d4d1c9' stroke-width='1.5'/>
+<text x='520.0' y='571.5' font-size='18' fill='#4a6a8a' text-anchor='middle' font-family='Inter, system-ui, sans-serif'>→</text>
+<text x='520.0' y='589.5' font-size='9' fill='#4a6a8a' text-anchor='middle' font-family='IBM Plex Mono, ui-monospace, monospace'>wrap_generate</text>
+<rect x='24' y='951' width='480' height='36' rx='6' fill='white' stroke='#d4d1c9'/>
+<text x='40' y='965' font-size='10' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>await ai.generate(messages=messages, ...)</text>
+<text x='40' y='979' font-size='9.5' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>all 21 slots ride along on every subsequent call until compaction shrinks the prefix</text>
+<rect x='24' y='1003' width='992' height='40' rx='6' fill='white' stroke='#d4d1c9'/>
+<text x='36' y='1019' font-size='10.5' fill='#141414' font-family='Inter, system-ui, sans-serif'>Hot zones: messages[3], [6], [8], [9], [11], [19] hold most of the ~12k tokens. Compaction targets the prefix; the tail stays verbatim.</text>
+<text x='36' y='1033' font-size='9.5' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>Summarization (not shown) replaces a large prefix with one handoff message when usage crosses 85% of budget.</text>
+</svg>
