@@ -14,11 +14,18 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Compaction middleware recipe for Genkit coding-agent harnesses.
+"""Layered compaction middleware for Genkit coding-agent harnesses.
 
-Not part of the official Genkit middleware plugin. Copy this file into your
-project and pass ``Compaction()`` in ``use=[...]`` alongside ``Filesystem``
-and ``Artifacts`` from ``genkit.plugins.middleware``.
+Structural layers (cheap, lossless where files stay on disk):
+  - offload large tool outputs to session artifacts
+  - clip bulky tool-call arguments in older turns
+  - truncate oversized tool responses outside the keep window
+
+Summarization layer (when context budget is still exceeded):
+  - append evicted transcript to a conversation log artifact
+  - replace the evicted prefix with an LLM-written summary + log pointer
+
+Pair with official ``Filesystem`` and ``Artifacts`` from ``genkit.plugins.middleware``.
 
 Blog writeup: https://agentinternals.dev/blog/compaction-in-coding-harnesses/
 """
@@ -26,18 +33,18 @@ Blog writeup: https://agentinternals.dev/blog/compaction-in-coding-harnesses/
 from __future__ import annotations
 
 import json
-import re
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from copy import deepcopy
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
-from genkit._core._model import Message
+from genkit._core._action import ActionKind
+from genkit._core._model import Message, ModelRequest, text_from_content
 from genkit._core._typing import (
     Artifact,
-    MediaPart,
     Part,
     Role,
     TextPart,
@@ -53,11 +60,35 @@ from genkit.middleware import (
 )
 
 _ARTIFACT_SOURCE = 'compaction-middleware'
+_SUMMARY_SOURCE = 'compaction-summary'
+_CHARS_PER_TOKEN = 4
 _DEFAULT_BULK_INPUT_KEYS = frozenset(
     {'content', 'old_string', 'new_string', 'command', 'code', 'patch', 'diff'}
 )
-_READ_FILE_PATH_RE = re.compile(r'<read_file[^>]*\bpath=["\']([^"\']+)["\']')
-_FILESYSTEM_TOOL_META = 'filesystemMiddlewareTool'
+_TOOLS_EXCLUDED_FROM_OFFLOAD = frozenset({'read_file', 'write_file', 'edit_file', 'list_files'})
+
+_SUMMARY_PROMPT = """\
+Older turns from a coding-agent run are below. Produce a compact handoff note the
+agent can use to keep working without the raw transcript.
+
+Use exactly these headings (write "none" for an empty section):
+
+### Goal
+### What happened
+### Paths and edits
+### Still to do
+
+Transcript:
+{messages}
+
+Return only the handoff note under those headings.
+"""
+
+
+class Summarizer(Protocol):
+    """Async callable that turns evicted messages into a summary string."""
+
+    async def __call__(self, messages: list[Message], *, ctx: GenerateMiddlewareContext) -> str: ...
 
 
 class CompactionConfig(BaseModel):
@@ -65,7 +96,7 @@ class CompactionConfig(BaseModel):
 
     max_tool_output_chars: int = Field(
         default=1500,
-        description='Inline cap for a single tool result. Larger outputs are offloaded or clipped.',
+        description='Inline cap for a single tool result outside the keep window.',
     )
     max_tool_input_chars: int = Field(
         default=400,
@@ -73,19 +104,55 @@ class CompactionConfig(BaseModel):
     )
     keep_recent_messages: int = Field(
         default=6,
-        description='Trailing messages left untouched by history compaction.',
+        description='Fallback keep window (message count) when token budget is unset.',
+    )
+    max_context_tokens: int | None = Field(
+        default=200_000,
+        description='Approximate model context size used for fraction triggers.',
+    )
+    trigger_fraction: float = Field(
+        default=0.85,
+        description='Summarize when estimated tokens reach this fraction of max_context_tokens.',
+    )
+    keep_fraction: float = Field(
+        default=0.10,
+        description='Fraction of max_context_tokens to preserve verbatim at the tail.',
     )
     preview_chars: int = Field(
         default=120,
-        description='How many characters to keep at the start of a truncated field.',
+        description='Characters kept at the start of a truncated inline field.',
+    )
+    preview_head_lines: int = Field(
+        default=5,
+        description='Lines shown from the start of an offloaded tool result.',
+    )
+    preview_tail_lines: int = Field(
+        default=5,
+        description='Lines shown from the end of an offloaded tool result.',
     )
     offload_large_outputs: bool = Field(
         default=True,
         description='When a session is available, store full tool output in an artifact.',
     )
-    strip_filesystem_reads: bool = Field(
+    offload_tool_threshold_chars: int = Field(
+        default=80_000,
+        description='Tool results larger than this (~20k tokens) are offloaded immediately.',
+    )
+    enable_summarization: bool = Field(
         default=True,
-        description='Replace old <read_file> user deliveries with path stubs.',
+        description='When true and a summarizer/model is configured, run LLM compaction at the trigger.',
+    )
+    summary_model: str | None = Field(
+        default=None,
+        description='Registry model name for summarization (use a cheap/fast model).',
+    )
+    trim_summary_input_tokens: int = Field(
+        default=4000,
+        description='Max estimated tokens from evicted messages sent to the summary model.',
+    )
+    conversation_log_prefix: str = Field(
+        default='conversation-history',
+        description='Artifact name prefix for appended conversation logs.',
     )
     bulk_input_keys: list[str] = Field(
         default_factory=lambda: sorted(_DEFAULT_BULK_INPUT_KEYS),
@@ -94,10 +161,6 @@ class CompactionConfig(BaseModel):
     truncation_suffix: str = Field(
         default='…[truncated]',
         description='Appended after clipped tool arguments and outputs.',
-    )
-    filesystem_strip_suffix: str = Field(
-        default='…[stripped]',
-        description='Marker left when an old read_file delivery is removed.',
     )
 
 
@@ -112,6 +175,14 @@ def _as_text(value: Any) -> str:
         return str(value)
 
 
+def _message_text(msg: Message) -> str:
+    return text_from_content(msg.content)
+
+
+def _approx_tokens(messages: Sequence[Message]) -> int:
+    return sum(len(_message_text(m)) for m in messages) // _CHARS_PER_TOKEN
+
+
 def _truncate_text(text: str, max_chars: int, preview_chars: int, suffix: str) -> str:
     if len(text) <= max_chars:
         return text
@@ -119,44 +190,19 @@ def _truncate_text(text: str, max_chars: int, preview_chars: int, suffix: str) -
     return f'{head}{suffix} ({len(text):,} chars total)'
 
 
-def _extract_read_file_path(text: str) -> str | None:
-    match = _READ_FILE_PATH_RE.search(text)
-    return match.group(1) if match else None
-
-
-def _is_filesystem_read_part(part: Part) -> bool:
-    root = part.root
-    if isinstance(root, TextPart) and root.text:
-        meta = root.metadata if isinstance(root.metadata, dict) else {}
-        if meta.get(_FILESYSTEM_TOOL_META):
-            return True
-        return root.text.lstrip().startswith('<read_file')
-    return False
-
-
-def _is_filesystem_media_part(part: Part) -> bool:
-    root = part.root
-    if not isinstance(root, MediaPart):
-        return False
-    meta = root.metadata if isinstance(root.metadata, dict) else {}
-    return bool(meta.get(_FILESYSTEM_TOOL_META))
-
-
-def _strip_filesystem_read_text(text: str, suffix: str) -> str:
-    path = _extract_read_file_path(text) or 'unknown'
-    return (
-        f'<read_file path="{path}">{suffix} '
-        f'({len(text):,} chars; file is on disk, call read_file to retrieve)</read_file>'
-    )
-
-
-def _strip_filesystem_media_part(part: Part, suffix: str) -> Part:
-    return Part(
-        root=TextPart(
-            text=f'<read_file path="unknown">{suffix} (image; call read_file to retrieve)</read_file>',
-            metadata={_FILESYSTEM_TOOL_META: True},
-        )
-    )
+def _head_tail_preview(
+    text: str,
+    *,
+    head_lines: int,
+    tail_lines: int,
+) -> str:
+    lines = text.splitlines()
+    if len(lines) <= head_lines + tail_lines:
+        return '\n'.join(line[:1000] for line in lines)
+    head = '\n'.join(line[:1000] for line in lines[:head_lines])
+    tail = '\n'.join(line[:1000] for line in lines[-tail_lines:])
+    omitted = len(lines) - head_lines - tail_lines
+    return f'{head}\n<<< {omitted} lines omitted >>>\n{tail}'
 
 
 def _truncate_tool_input(
@@ -180,22 +226,58 @@ def _truncate_tool_input(
     return out
 
 
-def _compact_messages(
-    messages: list[Message],
-    *,
-    keep_recent: int,
-    max_output_chars: int,
-    max_input_chars: int,
-    preview_chars: int,
-    suffix: str,
-    bulk_keys: frozenset[str],
-    strip_filesystem_reads: bool,
-    filesystem_strip_suffix: str,
-) -> list[Message]:
-    if len(messages) <= keep_recent:
-        return messages
+def _determine_cutoff_index(messages: list[Message], cfg: CompactionConfig) -> int:
+    """Index where the keep window starts. Messages before this may be compacted."""
+    if not messages:
+        return 0
 
-    cutoff = len(messages) - keep_recent
+    max_tokens = cfg.max_context_tokens
+    if max_tokens is not None and max_tokens > 0:
+        target = max(1, int(max_tokens * cfg.keep_fraction))
+        kept = 0
+        for i in range(len(messages) - 1, -1, -1):
+            kept += max(1, len(_message_text(messages[i])) // _CHARS_PER_TOKEN)
+            if kept >= target:
+                return i
+        return 0
+
+    keep = cfg.keep_recent_messages
+    if len(messages) <= keep:
+        return len(messages)
+    return len(messages) - keep
+
+
+def _should_summarize(messages: list[Message], cfg: CompactionConfig) -> bool:
+    if not cfg.enable_summarization:
+        return False
+    max_tokens = cfg.max_context_tokens
+    if max_tokens is None or max_tokens <= 0:
+        return False
+    threshold = int(max_tokens * cfg.trigger_fraction)
+    return _approx_tokens(messages) >= threshold
+
+
+def _format_transcript(messages: list[Message]) -> str:
+    lines: list[str] = []
+    for msg in messages:
+        role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+        body = _message_text(msg).strip()
+        if not body:
+            continue
+        lines.append(f'[{role}] {body}')
+    return '\n\n'.join(lines)
+
+
+def _compact_prefix(
+    messages: list[Message],
+    cutoff: int,
+    cfg: CompactionConfig,
+) -> list[Message]:
+    """Clip bulky fields in messages before the keep window."""
+    if cutoff <= 0 or cutoff >= len(messages):
+        return list(messages)
+
+    bulk = frozenset(cfg.bulk_input_keys)
     compacted: list[Message] = []
     for idx, msg in enumerate(messages):
         if idx >= cutoff:
@@ -205,30 +287,14 @@ def _compact_messages(
         new_parts: list[Part] = []
         for part in msg.content:
             root = part.root
-            if strip_filesystem_reads and msg.role == Role.USER:
-                if _is_filesystem_read_part(part):
-                    text = root.text if isinstance(root, TextPart) else ''
-                    new_parts.append(
-                        Part(
-                            root=TextPart(
-                                text=_strip_filesystem_read_text(text, filesystem_strip_suffix),
-                                metadata={_FILESYSTEM_TOOL_META: True},
-                            )
-                        )
-                    )
-                    continue
-                if _is_filesystem_media_part(part):
-                    new_parts.append(_strip_filesystem_media_part(part, filesystem_strip_suffix))
-                    continue
-
             if isinstance(root, ToolRequestPart):
                 tr = root.tool_request
                 new_input = _truncate_tool_input(
                     tr.input,
-                    max_chars=max_input_chars,
-                    preview_chars=preview_chars,
-                    suffix=suffix,
-                    bulk_keys=bulk_keys,
+                    max_chars=cfg.max_tool_input_chars,
+                    preview_chars=cfg.preview_chars,
+                    suffix=cfg.truncation_suffix,
+                    bulk_keys=bulk,
                 )
                 new_parts.append(
                     Part(
@@ -243,8 +309,13 @@ def _compact_messages(
             if isinstance(root, ToolResponsePart):
                 tr = root.tool_response
                 output_text = _as_text(tr.output)
-                if len(output_text) > max_output_chars:
-                    output_text = _truncate_text(output_text, max_output_chars, preview_chars, suffix)
+                if len(output_text) > cfg.max_tool_output_chars:
+                    output_text = _truncate_text(
+                        output_text,
+                        cfg.max_tool_output_chars,
+                        cfg.preview_chars,
+                        cfg.truncation_suffix,
+                    )
                     new_parts.append(
                         Part(
                             root=ToolResponsePart(
@@ -256,11 +327,16 @@ def _compact_messages(
                     continue
 
             if isinstance(root, TextPart) and isinstance(root.text, str):
-                if len(root.text) > max_output_chars:
+                if len(root.text) > cfg.max_tool_output_chars:
                     new_parts.append(
                         Part(
                             root=TextPart(
-                                text=_truncate_text(root.text, max_output_chars, preview_chars, suffix),
+                                text=_truncate_text(
+                                    root.text,
+                                    cfg.max_tool_output_chars,
+                                    cfg.preview_chars,
+                                    cfg.truncation_suffix,
+                                ),
                                 metadata=root.metadata,
                             )
                         )
@@ -274,8 +350,99 @@ def _compact_messages(
     return compacted
 
 
+def _build_summary_message(summary: str, log_path: str | None) -> Message:
+    if log_path:
+        text = (
+            '[context compressed]\n'
+            'Older turns were dropped from the active window to free tokens.\n'
+            f'Verbatim archive: artifact `{log_path}` (read_artifact).\n\n'
+            f'--- handoff ---\n{summary}\n--- end handoff ---'
+        )
+    else:
+        text = f'[context compressed]\n\n--- handoff ---\n{summary}\n--- end handoff ---'
+
+    return Message(
+        role=Role.USER,
+        content=[Part(text=text)],
+        metadata={_SUMMARY_SOURCE: True},
+    )
+
+
+async def _session_log_name(ctx: GenerateMiddlewareContext, cfg: CompactionConfig) -> str:
+    session_id = 'session'
+    if ctx.session is not None:
+        state = await ctx.session.state()
+        if state.session_id:
+            session_id = state.session_id
+    return f'{cfg.conversation_log_prefix}/{session_id}.md'
+
+
+async def _read_artifact_text(ctx: GenerateMiddlewareContext, name: str) -> str:
+    if ctx.session is None:
+        return ''
+    for art in await ctx.session.get_artifacts():
+        if art.name == name:
+            return _as_text(_extract_artifact_text(art))
+    return ''
+
+
+def _extract_artifact_text(artifact: Artifact) -> str:
+    parts: list[str] = []
+    for part in artifact.parts:
+        root = part.root
+        if isinstance(root, TextPart) and root.text:
+            parts.append(root.text)
+    return '\n'.join(parts)
+
+
+async def _append_conversation_log(
+    ctx: GenerateMiddlewareContext,
+    log_name: str,
+    evicted: list[Message],
+) -> bool:
+    if ctx.session is None:
+        return False
+
+    timestamp = datetime.now(UTC).isoformat()
+    section = f'--- archived turns ({timestamp}) ---\n\n{_format_transcript(evicted)}\n\n'
+    existing = await _read_artifact_text(ctx, log_name)
+    await ctx.session.add_artifacts(
+        Artifact(
+            name=log_name,
+            parts=[Part(text=existing + section)],
+            metadata={'source': _ARTIFACT_SOURCE, 'kind': 'conversation-log'},
+        )
+    )
+    return True
+
+
+def _trim_messages_for_summary(messages: list[Message], max_tokens: int) -> list[Message]:
+    """Keep the tail of evicted messages that fits the summary model budget."""
+    if not messages:
+        return messages
+
+    budget_chars = max_tokens * _CHARS_PER_TOKEN
+    total = 0
+    start = len(messages)
+    for i in range(len(messages) - 1, -1, -1):
+        total += len(_message_text(messages[i]))
+        if total > budget_chars:
+            break
+        start = i
+    return messages[start:]
+
+
 class Compaction(BaseMiddleware[CompactionConfig]):
-    """Layered compaction for agent tool loops: offload, strip reads, trim history."""
+    """Layered compaction: structural clipping, tool offload, optional LLM summarization."""
+
+    def __init__(
+        self,
+        *,
+        summarizer: Summarizer | None = None,
+        **kwargs: Any,  # noqa: ANN401
+    ) -> None:
+        super().__init__(**kwargs)
+        self._summarizer = summarizer
 
     async def wrap_generate(
         self,
@@ -284,25 +451,71 @@ class Compaction(BaseMiddleware[CompactionConfig]):
         next_fn: Callable[[GenerateHookParams, GenerateMiddlewareContext], Awaitable[Any]],
     ) -> Any:
         cfg = self.config
-        bulk = frozenset(cfg.bulk_input_keys)
-        compact_kwargs = {
-            'keep_recent': cfg.keep_recent_messages,
-            'max_output_chars': cfg.max_tool_output_chars,
-            'max_input_chars': cfg.max_tool_input_chars,
-            'preview_chars': cfg.preview_chars,
-            'suffix': cfg.truncation_suffix,
-            'bulk_keys': bulk,
-            'strip_filesystem_reads': cfg.strip_filesystem_reads,
-            'filesystem_strip_suffix': cfg.filesystem_strip_suffix,
-        }
+        msgs = list(params.options.messages)
+        cutoff = _determine_cutoff_index(msgs, cfg)
+        msgs = _compact_prefix(msgs, cutoff, cfg)
 
-        compacted_options = _compact_messages(list(params.options.messages), **compact_kwargs)
-        compacted_request = _compact_messages(list(params.request.messages), **compact_kwargs)
+        if _should_summarize(msgs, cfg):
+            cutoff = _determine_cutoff_index(msgs, cfg)
+            if cutoff > 0:
+                msgs = await self._summarize_and_replace(msgs, cutoff, ctx)
 
-        new_options = params.options.model_copy(update={'messages': compacted_options})
-        new_request = params.request.model_copy(update={'messages': compacted_request})
+        new_options = params.options.model_copy(update={'messages': msgs})
+        new_request = params.request.model_copy(update={'messages': msgs})
         new_params = params.model_copy(update={'options': new_options, 'request': new_request})
         return await next_fn(new_params, ctx)
+
+    async def _summarize_and_replace(
+        self,
+        messages: list[Message],
+        cutoff: int,
+        ctx: GenerateMiddlewareContext,
+    ) -> list[Message]:
+        evicted = [m for m in messages[:cutoff] if not (m.metadata or {}).get(_SUMMARY_SOURCE)]
+        kept = messages[cutoff:]
+        if not evicted:
+            return messages
+
+        log_name = await _session_log_name(ctx, self.config)
+        log_ok = await _append_conversation_log(ctx, log_name, evicted)
+        log_path = log_name if log_ok else None
+
+        summary = await self._create_summary(evicted, ctx)
+        return [_build_summary_message(summary, log_path), *kept]
+
+    async def _create_summary(self, messages: list[Message], ctx: GenerateMiddlewareContext) -> str:
+        trimmed = _trim_messages_for_summary(messages, self.config.trim_summary_input_tokens)
+        transcript = _format_transcript(trimmed)
+
+        if self._summarizer is not None:
+            return await self._summarizer(trimmed, ctx=ctx)
+
+        model_name = self.config.summary_model
+        if not model_name:
+            snippet = _truncate_text(transcript, 2000, 500, self.config.truncation_suffix)
+            return (
+                '### Goal\nunknown (no summary_model configured)\n\n'
+                f'### What happened\n{snippet}'
+            )
+
+        action = await ctx.registry.resolve_action(ActionKind.MODEL, model_name)
+        if action is None:
+            snippet = _truncate_text(transcript, 2000, 500, self.config.truncation_suffix)
+            return (
+                f'### Goal\nunknown (model {model_name!r} missing from registry)\n\n'
+                f'### What happened\n{snippet}'
+            )
+
+        prompt = _SUMMARY_PROMPT.format(messages=transcript)
+        result = await action.run(
+            ModelRequest(
+                messages=[Message(role=Role.USER, content=[Part(text=prompt)])],
+            )
+        )
+        response = result.response
+        if getattr(response, 'message', None) is not None:
+            return _message_text(response.message).strip()
+        return _as_text(response).strip()
 
     async def wrap_tool(
         self,
@@ -312,8 +525,12 @@ class Compaction(BaseMiddleware[CompactionConfig]):
     ) -> MultipartToolResponse:
         result = await next_fn(params, ctx)
         cfg = self.config
+        tool_name = params.tool.name
+        if tool_name in _TOOLS_EXCLUDED_FROM_OFFLOAD:
+            return result
+
         text = _as_text(result.output)
-        if len(text) <= cfg.max_tool_output_chars:
+        if len(text) <= cfg.offload_tool_threshold_chars:
             return result
 
         tool_name = params.tool.name
@@ -328,11 +545,15 @@ class Compaction(BaseMiddleware[CompactionConfig]):
                     metadata={'source': _ARTIFACT_SOURCE, 'tool': tool_name, 'ref': ref},
                 )
             )
-            preview = text[: cfg.preview_chars].rstrip()
+            preview = _head_tail_preview(
+                text,
+                head_lines=cfg.preview_head_lines,
+                tail_lines=cfg.preview_tail_lines,
+            )
             compact = (
-                f'{preview}{cfg.truncation_suffix} '
-                f'({len(text):,} chars saved to artifact "{artifact_name}". '
-                f'Use read_artifact to retrieve.)'
+                f'[output offloaded] inline cap exceeded; full text in artifact `{artifact_name}`.\n'
+                f'Load with read_artifact — read in slices if it is long.\n\n'
+                f'--- sample ---\n{preview}\n--- end sample ---'
             )
             return MultipartToolResponse(
                 output=compact,

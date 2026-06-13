@@ -22,7 +22,7 @@ from genkit._core._typing import (
     ToolResponse,
     ToolResponsePart,
 )
-from compaction import CompactionConfig, _compact_messages, _truncate_text
+from compaction import CompactionConfig, _compact_prefix, _determine_cutoff_index
 
 REPO = Path('/Users/jeffhuang/Desktop/genkit-middleware')
 FILE_A = (REPO / 'py/plugins/middleware/src/genkit/plugins/middleware/_filesystem.py').read_text()
@@ -132,7 +132,7 @@ TRANSCRIPT: list[tuple[Message, str, str]] = [
      'model · working', 'prose'),
 ]
 
-CFG = CompactionConfig()
+CFG = CompactionConfig(max_context_tokens=None, keep_recent_messages=6)
 
 
 def msg_chars(m: Message) -> int:
@@ -149,54 +149,12 @@ def msg_chars(m: Message) -> int:
     return total
 
 
-def offload_pointer(text: str, tool: str) -> str:
-    preview = text[: CFG.preview_chars].rstrip()
-    name = f'tool-output/{tool}/ref.txt'
-    return (
-        f'{preview}{CFG.truncation_suffix} '
-        f'({len(text):,} chars saved to artifact "{name}". Use read_artifact to retrieve.)'
-    )
-
-
-def apply_offload(messages: list[Message]) -> list[Message]:
-    out = []
-    for m in messages:
-        new_parts = []
-        changed = False
-        for part in m.content:
-            root = part.root
-            if isinstance(root, ToolResponsePart):
-                o = root.tool_response.output
-                if isinstance(o, str) and len(o) > CFG.max_tool_output_chars:
-                    new_parts.append(Part(root=ToolResponsePart(
-                        tool_response=root.tool_response.model_copy(
-                            update={'output': offload_pointer(o, root.tool_response.name or 'tool')}
-                        ))))
-                    changed = True
-                    continue
-            new_parts.append(part)
-        out.append(Message(role=m.role, content=new_parts) if changed else m)
-    return out
-
-
 messages = [t[0] for t in TRANSCRIPT]
 stage0 = [msg_chars(m) for m in messages]
 
-offloaded = apply_offload(messages)
-stage1 = [msg_chars(m) for m in offloaded]
-
-clipped = _compact_messages(
-    offloaded,
-    keep_recent=CFG.keep_recent_messages,
-    max_output_chars=CFG.max_tool_output_chars,
-    max_input_chars=CFG.max_tool_input_chars,
-    preview_chars=CFG.preview_chars,
-    suffix=CFG.truncation_suffix,
-    bulk_keys=frozenset(CFG.bulk_input_keys),
-    strip_filesystem_reads=CFG.strip_filesystem_reads,
-    filesystem_strip_suffix=CFG.filesystem_strip_suffix,
-)
-stage2 = [msg_chars(m) for m in clipped]
+cutoff = _determine_cutoff_index(messages, CFG)
+clipped = _compact_prefix(messages, cutoff, CFG)
+stage1 = [msg_chars(m) for m in clipped]
 
 rows = []
 for i, (msg, label, kind) in enumerate(TRANSCRIPT):
@@ -205,17 +163,17 @@ for i, (msg, label, kind) in enumerate(TRANSCRIPT):
         'label': label,
         'kind': kind,
         'before': stage0[i],
-        'offload': stage1[i],
-        'clip': stage2[i],
-        'in_keep_window': i >= len(TRANSCRIPT) - CFG.keep_recent_messages,
+        'clip': stage1[i],
+        'in_keep_window': i >= cutoff,
     })
 
 result = {
     'rows': rows,
-    'totals': {'before': sum(stage0), 'offload': sum(stage1), 'clip': sum(stage2)},
+    'totals': {'before': sum(stage0), 'clip': sum(stage1)},
     'config': CFG.model_dump(),
+    'cutoff_index': cutoff,
 }
 Path('/tmp/compaction_demo.json').write_text(json.dumps(result, indent=2))
 print(json.dumps(result['totals'], indent=2))
 for r in rows:
-    print(f"{r['idx']:>2} {r['kind']:<8} {r['before']:>7} {r['offload']:>7} {r['clip']:>7}  {r['label']}")
+    print(f"{r['idx']:>2} {r['kind']:<8} {r['before']:>7} {r['clip']:>7}  {r['label']}")

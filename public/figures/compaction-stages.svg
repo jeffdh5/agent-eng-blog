@@ -1,4 +1,4 @@
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 198' role='img' aria-label='The same transcript at three compaction stages, drawn to scale: 50.5k chars raw, 47.3k after offloading tool outputs, 9.2k after stripping read deliveries and clipping old tool arguments.'>
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 134' role='img' aria-label='The same transcript at two compaction stages, drawn to scale: 50.5k chars raw, 9.1k after structural compaction.'>
 <text x='8' y='16' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>raw message history<tspan fill='#8c8c8c'>  ·  every read result, log, and write argument rides along</tspan></text>
 <text x='712' y='16' font-size='12' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>50.5k chars</text>
 <rect x='8.00' y='24' width='1.12' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
@@ -22,50 +22,27 @@
 <rect x='607.78' y='24' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
 <rect x='608.87' y='24' width='95.00' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
 <rect x='703.86' y='24' width='0.97' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<text x='8' y='80' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>large tool outputs offloaded to artifacts<tspan fill='#8c8c8c'>  ·  traceback becomes a pointer; read_file bodies were never in tool results</tspan></text>
-<text x='712' y='80' font-size='12' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>47.3k chars</text>
+<text x='8' y='80' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>after structural compaction<tspan fill='#8c8c8c'>  ·  old read deliveries and tool args clipped; recent 6 messages untouched</tspan></text>
+<text x='712' y='80' font-size='12' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>9.1k chars</text>
 <rect x='8.00' y='88' width='1.12' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
 <rect x='9.12' y='88' width='0.81' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
 <rect x='9.93' y='88' width='1.08' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='11.01' y='88' width='200.18' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='211.19' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='211.99' y='88' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='213.08' y='88' width='95.00' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='308.07' y='88' width='0.87' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='308.94' y='88' width='3.12' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='312.06' y='88' width='35.19' height='22' fill='#9a4a2a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='347.25' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='348.05' y='88' width='206.65' height='22' fill='#9a4a2a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='554.70' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='555.50' y='88' width='0.87' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='556.37' y='88' width='4.29' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='560.66' y='88' width='1.27' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='561.93' y='88' width='0.83' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='562.75' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='563.55' y='88' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='564.64' y='88' width='95.00' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='659.64' y='88' width='0.97' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<text x='8' y='144' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>plus read deliveries stripped and tool args clipped<tspan fill='#8c8c8c'>  ·  recent 6 messages untouched; old reads become stubs</tspan></text>
-<text x='712' y='144' font-size='12' fill='#141414' text-anchor='end' font-family='IBM Plex Mono, ui-monospace, monospace'>9.2k chars</text>
-<rect x='8.00' y='152' width='1.12' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='9.12' y='152' width='0.81' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='9.93' y='152' width='1.08' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='11.01' y='152' width='1.86' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='12.87' y='152' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='13.67' y='152' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='14.76' y='152' width='1.71' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='16.46' y='152' width='0.87' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='17.33' y='152' width='3.12' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='20.45' y='152' width='5.13' height='22' fill='#9a4a2a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='25.58' y='152' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='26.38' y='152' width='3.06' height='22' fill='#9a4a2a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='29.44' y='152' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='30.24' y='152' width='0.87' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='31.11' y='152' width='4.29' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='35.39' y='152' width='1.27' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='36.66' y='152' width='0.83' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='37.49' y='152' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='38.29' y='152' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='39.38' y='152' width='95.00' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
-<rect x='134.38' y='152' width='0.97' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='11.01' y='88' width='2.11' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='13.11' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='13.91' y='88' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='15.00' y='88' width='2.10' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='17.10' y='88' width='0.87' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='17.97' y='88' width='2.10' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='20.06' y='88' width='5.13' height='22' fill='#9a4a2a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='25.19' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='25.99' y='88' width='3.06' height='22' fill='#9a4a2a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='29.05' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='29.85' y='88' width='0.87' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='30.72' y='88' width='4.29' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='35.01' y='88' width='1.27' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='36.28' y='88' width='0.83' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='37.10' y='88' width='0.80' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='37.90' y='88' width='1.09' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='38.99' y='88' width='95.00' height='22' fill='#2a4a3a' stroke='#f6f5f2' stroke-width='0.5'/>
+<rect x='133.99' y='88' width='0.97' height='22' fill='#c9c6bd' stroke='#f6f5f2' stroke-width='0.5'/>
 </svg>

@@ -81,26 +81,24 @@ for r in rows:
 parts.append('</svg>')
 (OUT / 'compaction-anatomy.svg').write_text('\n'.join(parts))
 
-# ---------------- figure 2: three stages ----------------
+# ---------------- figure 2: two stages ----------------
 W2 = 720
 BAR_X2 = 8
 MAX_BAR2 = W2 - BAR_X2 - 16
 scale2 = MAX_BAR2 / totals['before']
 STAGE_GAP = 64
 BAR_H = 22
-H2 = 3 * STAGE_GAP + 6
+H2 = 2 * STAGE_GAP + 6
 
 stages = [
     ('before', 'raw message history', 'every read result, log, and write argument rides along'),
-    ('offload', 'large tool outputs offloaded to artifacts', 'traceback becomes a pointer; read_file bodies were never in tool results'),
-    ('clip', 'plus read deliveries stripped and tool args clipped', 'recent 6 messages untouched; old reads become stubs'),
+    ('clip', 'after structural compaction', 'old read deliveries and tool args clipped; recent 6 messages untouched'),
 ]
 
 parts = [
     f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {W2} {H2}' role='img' "
-    f"aria-label='The same transcript at three compaction stages, drawn to scale: "
-    f"{fmt(totals['before'])} chars raw, {fmt(totals['offload'])} after offloading tool outputs, "
-    f"{fmt(totals['clip'])} after stripping read deliveries and clipping old tool arguments.'>",
+    f"aria-label='The same transcript at two compaction stages, drawn to scale: "
+    f"{fmt(totals['before'])} chars raw, {fmt(totals['clip'])} after structural compaction.'>",
 ]
 
 y = 4
