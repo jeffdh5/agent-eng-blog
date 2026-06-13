@@ -7,6 +7,7 @@ Output: /tmp/compaction_demo.json
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -135,6 +136,87 @@ TRANSCRIPT: list[tuple[Message, str, str]] = [
 CFG = CompactionConfig(max_context_tokens=None, keep_recent_messages=6)
 
 
+def _esc(text: str) -> str:
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+def _short_path(path: str) -> str:
+    return path.replace('src/.../middleware/', '').replace('src/.../', '')
+
+
+def wire_lines(msg: Message, *, chars: int) -> list[str]:
+    """Human-readable wire-format lines for the transcript figure."""
+    for part in msg.content:
+        root = part.root
+        if isinstance(root, TextPart) and root.text:
+            text = root.text.strip()
+            if text.startswith('<read_file'):
+                m = re.search(r'path="([^"]+)" totalLines="(\d+)"', text)
+                path = _short_path(m.group(1)) if m else 'file'
+                lines = int(m.group(2)) if m else 0
+                body_lines = text.splitlines()
+                preview = body_lines[1] if len(body_lines) > 1 else ''
+                if len(preview) > 58:
+                    preview = preview[:55] + '...'
+                return [
+                    f'<read_file path="{path}" totalLines="{lines}">',
+                    preview,
+                    f'... {max(0, lines - 1)} lines, {chars:,} chars total ...',
+                    '</read_file>',
+                ]
+            if len(text) > 72:
+                return [text[:69] + '...']
+            return [text]
+
+        if isinstance(root, ToolRequestPart):
+            tr = root.tool_request
+            name = tr.name or 'tool'
+            inp = tr.input or {}
+            if name == 'read_file':
+                fp = _short_path(str(inp.get('file_path', '')))
+                return [f'tool_call: read_file(file_path="{fp}")']
+            if name == 'execute':
+                return [f'tool_call: execute(command="{inp.get("command", "")}")']
+            if name == 'edit_file':
+                fp = _short_path(str(inp.get('file_path', '')))
+                old = str(inp.get('old_string', ''))
+                new = str(inp.get('new_string', ''))
+                return [
+                    f'tool_call: edit_file(file_path="{fp}")',
+                    f'  old_string: "{old[:40]}..." ({len(old):,} chars)',
+                    f'  new_string: "{new[:40]}..." ({len(new):,} chars)',
+                ]
+            if name == 'write_file':
+                content = str(inp.get('content', ''))
+                fp = _short_path(str(inp.get('file_path', '')))
+                return [
+                    f'tool_call: write_file(file_path="{fp}")',
+                    f'  content: "{content[:36]}..." ({len(content):,} chars)',
+                ]
+            return [f'tool_call: {name}({json.dumps(inp, ensure_ascii=False)[:60]}...)']
+
+        if isinstance(root, ToolResponsePart):
+            out = root.tool_response.output
+            text = out if isinstance(out, str) else json.dumps(out, ensure_ascii=False)
+            if len(text) > 72:
+                lines = text.splitlines()
+                return lines[:2] + [f'... {len(lines)} lines, {chars:,} chars total ...']
+            return [text]
+    return ['(empty)']
+
+
+def compact_action(before: int, after: int, kind: str, in_keep: bool) -> str:
+    if in_keep:
+        return 'keep window: verbatim'
+    if after >= before:
+        return 'unchanged'
+    if kind == 'dup':
+        return 'clip tool_call args'
+    if kind == 'payload':
+        return 'truncate body'
+    return 'truncate'
+
+
 def msg_chars(m: Message) -> int:
     total = 0
     for part in m.content:
@@ -158,13 +240,19 @@ stage1 = [msg_chars(m) for m in clipped]
 
 rows = []
 for i, (msg, label, kind) in enumerate(TRANSCRIPT):
+    in_keep = i >= cutoff
+    b, a = stage0[i], stage1[i]
     rows.append({
         'idx': i + 1,
         'label': label,
         'kind': kind,
-        'before': stage0[i],
-        'clip': stage1[i],
-        'in_keep_window': i >= cutoff,
+        'role': msg.role.value if hasattr(msg.role, 'value') else str(msg.role),
+        'before': b,
+        'clip': a,
+        'in_keep_window': in_keep,
+        'wire_before': wire_lines(msg, chars=b),
+        'wire_after': wire_lines(clipped[i], chars=a),
+        'compact_action': compact_action(b, a, kind, in_keep),
     })
 
 result = {
@@ -172,6 +260,7 @@ result = {
     'totals': {'before': sum(stage0), 'clip': sum(stage1)},
     'config': CFG.model_dump(),
     'cutoff_index': cutoff,
+    'cutoff_message': cutoff + 1,
 }
 Path('/tmp/compaction_demo.json').write_text(json.dumps(result, indent=2))
 print(json.dumps(result['totals'], indent=2))

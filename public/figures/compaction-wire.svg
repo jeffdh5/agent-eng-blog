@@ -1,0 +1,185 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 920 1280' role='img' aria-label='Coding agent transcript wire format with hot zones and compaction before and after.'>
+<rect width='920' height='1280' fill='#f6f5f2'/>
+<text x='16' y='28' font-size='15' fill='#141414' font-family='Inter, system-ui, sans-serif'>The wire format, hot zones, and what compaction does</text>
+<text x='16' y='48' font-size='11' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>Real 21-message run: failing pytest, two reads, patch, rewrite, green run, follow-up. Numbers from the recipe code.</text>
+<rect x='16' y='58' width='10' height='10' rx='2' fill='#c9c6bd'/>
+<text x='30' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>prose</text>
+<rect x='79.0' y='58' width='10' height='10' rx='2' fill='#2a4a3a'/>
+<text x='93.0' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>file / log bulk</text>
+<rect x='204.0' y='58' width='10' height='10' rx='2' fill='#9a4a2a'/>
+<text x='218.0' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>dead weight in tool args</text>
+<rect x='384.8' y='58' width='10' height='10' rx='2' fill='#4a6a8a'/>
+<text x='398.8' y='67' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>compacted</text>
+<text x='16' y='96' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>How read_file lands on the wire</text>
+<rect x='16' y='106' width='888' height='41' rx='6' fill='white' stroke='#d4d1c9'/>
+<rect x='16' y='106' width='5' height='41' rx='2' fill='#c9c6bd'/>
+<rect x='28' y='112' width='44' height='16' rx='4' fill='#f0ebe6'/>
+<text x='50' y='123' font-size='9' fill='#5a4a3a' text-anchor='middle' font-family='IBM Plex Mono, ui-monospace, monospace'>model</text>
+<text x='82' y='123' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#2 · 59 chars</text>
+<text x='28' y='136' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: read_file(file_path="_filesystem.py")</text>
+<rect x='16' y='155' width='888' height='54' rx='6' fill='white' stroke='#d4d1c9'/>
+<rect x='16' y='155' width='5' height='54' rx='2' fill='#c9c6bd'/>
+<rect x='28' y='161' width='44' height='16' rx='4' fill='#e8efe9'/>
+<text x='50' y='172' font-size='9' fill='#2a4a3a' text-anchor='middle' font-family='IBM Plex Mono, ui-monospace, monospace'>tool</text>
+<text x='82' y='172' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#3 · 78 chars</text>
+<text x='28' y='185' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>File src/.../_filesystem.py read successfully. Content queued as user message.</text>
+<text x='28' y='198' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>... 1 lines, 78 chars total ...</text>
+<rect x='16' y='217' width='888' height='80' rx='6' fill='white' stroke='#d4d1c9'/>
+<rect x='16' y='217' width='5' height='80' rx='2' fill='#2a4a3a'/>
+<rect x='28' y='223' width='44' height='16' rx='4' fill='#e8ecf2'/>
+<text x='50' y='234' font-size='9' fill='#3d4f6a' text-anchor='middle' font-family='IBM Plex Mono, ui-monospace, monospace'>user</text>
+<text x='82' y='234' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#4 · 14.5k chars</text>
+<text x='28' y='247' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;read_file path="_filesystem.py" totalLines="373"&gt;</text>
+<text x='28' y='260' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'># Copyright 2025 Google LLC</text>
+<text x='28' y='273' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>... 372 lines, 14,521 chars total ...</text>
+<text x='28' y='286' font-size='9.5' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;/read_file&gt;</text>
+<text x='28' y='315' font-size='10' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>The tool ack is tiny. The file body queues as a user message and stays in history unless compaction clips it.</text>
+<text x='16' y='347' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>Full message list at turn 21</text>
+<rect x='16' y='355' width='888' height='386' rx='6' fill='white' stroke='#d4d1c9'/>
+<text x='28' y='369' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 1</text>
+<rect x='52' y='361' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='369' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>81</text>
+<text x='160' y='369' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>pytest is failing in plugins/middleware after the offset ch...</text>
+<text x='28' y='387' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 2</text>
+<rect x='52' y='379' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='387' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>59</text>
+<text x='160' y='387' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: read_file(file_path="_filesystem.py")</text>
+<text x='28' y='405' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 3</text>
+<rect x='52' y='397' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='405' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>78</text>
+<text x='160' y='405' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>File src/.../_filesystem.py read successfully. Content queu...</text>
+<text x='28' y='423' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 4</text>
+<rect x='52' y='415' width='207' height='10' rx='2' fill='#2a4a3a'/>
+<text x='263' y='423' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>14.5k</text>
+<text x='160' y='423' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;read_file path="_filesystem.py" totalLines="373"&gt;</text>
+<text x='28' y='441' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 5</text>
+<rect x='52' y='433' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='441' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<text x='160' y='441' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: read_file(file_path="tests/artifacts_test.py")</text>
+<text x='28' y='459' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 6</text>
+<rect x='52' y='451' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='459' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>79</text>
+<text x='160' y='459' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>File tests/artifacts_test.py read successfully. Content que...</text>
+<text x='28' y='477' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 7</text>
+<rect x='52' y='469' width='98' height='10' rx='2' fill='#2a4a3a'/>
+<text x='154' y='477' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>6.9k</text>
+<text x='160' y='477' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;read_file path="tests/artifacts_test.py" totalLines="192"&gt;</text>
+<text x='28' y='495' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 8</text>
+<rect x='52' y='487' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='495' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<text x='160' y='495' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: execute(command="uv run pytest plugins/middlewar...</text>
+<text x='28' y='513' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'># 9</text>
+<rect x='52' y='505' width='49' height='10' rx='2' fill='#2a4a3a'/>
+<text x='105' y='513' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>3.4k</text>
+<text x='160' y='513' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>============================= test session starts =========...</text>
+<text x='28' y='531' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#10</text>
+<rect x='52' y='523' width='36' height='10' rx='2' fill='#9a4a2a'/>
+<text x='92' y='531' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>2.6k</text>
+<text x='160' y='531' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: edit_file(file_path="_filesystem.py")</text>
+<text x='28' y='549' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#11</text>
+<rect x='52' y='541' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='549' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>25</text>
+<text x='160' y='549' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>File edited successfully.</text>
+<text x='28' y='567' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#12</text>
+<rect x='52' y='559' width='214' height='10' rx='2' fill='#9a4a2a'/>
+<text x='270' y='567' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>15.0k</text>
+<text x='160' y='567' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: write_file(file_path="_filesystem.py")</text>
+<text x='28' y='585' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#13</text>
+<rect x='52' y='577' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='585' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<text x='160' y='585' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>File src/.../_filesystem.py written successfully.</text>
+<text x='28' y='603' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#14</text>
+<rect x='52' y='595' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='603' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>63</text>
+<text x='160' y='603' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: execute(command="uv run pytest plugins/middlewar...</text>
+<text x='28' y='621' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#15</text>
+<rect x='52' y='613' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='621' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>311</text>
+<text x='160' y='621' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>============================= test session starts =========...</text>
+<rect x='18' y='629' width='884' height='16' fill='#faf9f6' opacity='0.9'/>
+<text x='28' y='639' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#16</text>
+<rect x='52' y='631' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='639' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>92</text>
+<text x='160' y='639' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>Fixed. read_file was multiplying a string offset; I coerced...</text>
+<rect x='18' y='647' width='884' height='16' fill='#faf9f6' opacity='0.9'/>
+<text x='28' y='657' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#17</text>
+<rect x='52' y='649' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='657' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>60</text>
+<text x='160' y='657' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>great. now add a regression test for the string-offset case.</text>
+<rect x='18' y='665' width='884' height='16' fill='#faf9f6' opacity='0.9'/>
+<text x='28' y='675' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#18</text>
+<rect x='52' y='667' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='675' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>49</text>
+<text x='160' y='675' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: read_file(file_path="tests/artifacts_test.py")</text>
+<rect x='18' y='683' width='884' height='16' fill='#faf9f6' opacity='0.9'/>
+<text x='28' y='693' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#19</text>
+<rect x='52' y='685' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='693' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>79</text>
+<text x='160' y='693' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>File tests/artifacts_test.py read successfully. Content que...</text>
+<rect x='18' y='701' width='884' height='16' fill='#faf9f6' opacity='0.9'/>
+<text x='28' y='711' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#20</text>
+<rect x='52' y='703' width='98' height='10' rx='2' fill='#2a4a3a'/>
+<text x='154' y='711' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>6.9k</text>
+<text x='160' y='711' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;read_file path="tests/artifacts_test.py" totalLines="192"&gt;</text>
+<rect x='18' y='719' width='884' height='16' fill='#faf9f6' opacity='0.9'/>
+<text x='28' y='729' font-size='9' fill='#8c8c8c' font-family='IBM Plex Mono, ui-monospace, monospace'>#21</text>
+<rect x='52' y='721' width='4' height='10' rx='2' fill='#c9c6bd'/>
+<text x='60' y='729' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>70</text>
+<text x='160' y='729' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>Adding a test that passes offset as a string and asserts th...</text>
+<line x1='16' y1='753' x2='904' y2='753' stroke='#4a6a8a' stroke-width='1.5' stroke-dasharray='6 4'/>
+<text x='16' y='769' font-size='10' fill='#4a6a8a' font-family='Inter, system-ui, sans-serif'>keep window starts at message #16 (last 6 messages verbatim)</text>
+<text x='16' y='799' font-size='12' fill='#141414' font-family='Inter, system-ui, sans-serif'>Hot zones: before and after wrap_generate</text>
+<text x='16' y='821' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>Raw (left)</text>
+<text x='468' y='821' font-size='10' fill='#5a5a5a' font-family='Inter, system-ui, sans-serif'>After compaction (right)</text>
+<rect x='16' y='829' width='430' height='88' rx='6' fill='#e8efe9' stroke='#2a4a3a' stroke-width='1.2'/>
+<text x='28' y='845' font-size='9' fill='#2a4a3a' font-family='IBM Plex Mono, ui-monospace, monospace'>#4 · user · 14.5k chars</text>
+<text x='28' y='859' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;read_file path="_filesystem.py" totalLines="373"&gt;</text>
+<text x='28' y='872' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'># Copyright 2025 Google LLC</text>
+<text x='28' y='885' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>... 372 lines, 14,521 chars total ...</text>
+<text x='28' y='898' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;/read_file&gt;</text>
+<rect x='468' y='829' width='436' height='88' rx='6' fill='white' stroke='#4a6a8a' stroke-width='1.2'/>
+<text x='480' y='845' font-size='9' fill='#4a6a8a' font-family='IBM Plex Mono, ui-monospace, monospace'>#4 · truncate body · 153 chars</text>
+<text x='480' y='859' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;read_file path="_filesystem.py" totalLines="373"&gt;</text>
+<text x='480' y='872' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'># Copyright 2025 Google LLC</text>
+<text x='480' y='885' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>... 372 lines, 153 chars total ...</text>
+<text x='480' y='898' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>&lt;/read_file&gt;</text>
+<text x='452' y='877.0' font-size='14' fill='#4a6a8a' text-anchor='middle' font-family='Inter, system-ui, sans-serif'>→</text>
+<rect x='16' y='929' width='430' height='75' rx='6' fill='#e8efe9' stroke='#2a4a3a' stroke-width='1.2'/>
+<text x='28' y='945' font-size='9' fill='#2a4a3a' font-family='IBM Plex Mono, ui-monospace, monospace'>#9 · tool · 3.4k chars</text>
+<text x='28' y='959' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>============================= test session starts ==============================</text>
+<text x='28' y='972' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>platform darwin -- Python 3.12.12, pytest-9.0.2</text>
+<text x='28' y='985' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>... 54 lines, 3,434 chars total ...</text>
+<rect x='468' y='929' width='436' height='75' rx='6' fill='white' stroke='#4a6a8a' stroke-width='1.2'/>
+<text x='480' y='945' font-size='9' fill='#4a6a8a' font-family='IBM Plex Mono, ui-monospace, monospace'>#9 · truncate body · 152 chars</text>
+<text x='480' y='959' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>============================= test session starts ==============================</text>
+<text x='480' y='972' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>platform darwin -- Python 3.12.12, pyte…[truncated] (3,434 chars total)</text>
+<text x='480' y='985' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>... 2 lines, 152 chars total ...</text>
+<text x='452' y='970.5' font-size='14' fill='#4a6a8a' text-anchor='middle' font-family='Inter, system-ui, sans-serif'>→</text>
+<rect x='16' y='1016' width='430' height='75' rx='6' fill='#f5ebe4' stroke='#9a4a2a' stroke-width='1.2'/>
+<text x='28' y='1032' font-size='9' fill='#9a4a2a' font-family='IBM Plex Mono, ui-monospace, monospace'>#10 · model · 2.6k chars</text>
+<text x='28' y='1046' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: edit_file(file_path="_filesystem.py")</text>
+<text x='28' y='1059' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>  old_string: "ory': False, 'size_bytes': stat.st_size}..." (1,200 chars)</text>
+<text x='28' y='1072' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>  new_string: "ory': False, 'size_bytes': stat.st_size}..." (1,205 chars)</text>
+<rect x='468' y='1016' width='436' height='75' rx='6' fill='white' stroke='#4a6a8a' stroke-width='1.2'/>
+<text x='480' y='1032' font-size='9' fill='#4a6a8a' font-family='IBM Plex Mono, ui-monospace, monospace'>#10 · clip tool_call args · 372 chars</text>
+<text x='480' y='1046' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: edit_file(file_path="_filesystem.py")</text>
+<text x='480' y='1059' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>  old_string: "ory': False, 'size_bytes': stat.st_size}..." (142 chars)</text>
+<text x='480' y='1072' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>  new_string: "ory': False, 'size_bytes': stat.st_size}..." (142 chars)</text>
+<text x='452' y='1057.5' font-size='14' fill='#4a6a8a' text-anchor='middle' font-family='Inter, system-ui, sans-serif'>→</text>
+<rect x='16' y='1103' width='430' height='62' rx='6' fill='#f5ebe4' stroke='#9a4a2a' stroke-width='1.2'/>
+<text x='28' y='1119' font-size='9' fill='#9a4a2a' font-family='IBM Plex Mono, ui-monospace, monospace'>#12 · model · 15.0k chars</text>
+<text x='28' y='1133' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: write_file(file_path="_filesystem.py")</text>
+<text x='28' y='1146' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>  content: "# Copyright 2025 Google LLC
+#
+# Lice..." (14,443 chars)</text>
+<rect x='468' y='1103' width='436' height='62' rx='6' fill='white' stroke='#4a6a8a' stroke-width='1.2'/>
+<text x='480' y='1119' font-size='9' fill='#4a6a8a' font-family='IBM Plex Mono, ui-monospace, monospace'>#12 · clip tool_call args · 222 chars</text>
+<text x='480' y='1133' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>tool_call: write_file(file_path="_filesystem.py")</text>
+<text x='480' y='1146' font-size='9' fill='#5a5a5a' font-family='IBM Plex Mono, ui-monospace, monospace'>  content: "# Copyright 2025 Google LLC
+#
+# Lice..." (153 chars)</text>
+<text x='452' y='1138.0' font-size='14' fill='#4a6a8a' text-anchor='middle' font-family='Inter, system-ui, sans-serif'>→</text>
+<rect x='16' y='1185' width='888' height='44' rx='6' fill='white' stroke='#d4d1c9'/>
+<text x='28' y='1203' font-size='11' fill='#141414' font-family='Inter, system-ui, sans-serif'>Structural pass only: 50.5k chars → 9.1k chars. Summarization layer not triggered at this size.</text>
+<text x='28' y='1219' font-size='10' fill='#8c8c8c' font-family='Inter, system-ui, sans-serif'>wrap_generate clips prefix; keep window untouched. wrap_tool offloads fresh 80k+ tool results (not shown here).</text>
+</svg>

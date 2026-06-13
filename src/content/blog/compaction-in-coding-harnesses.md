@@ -14,11 +14,21 @@ I spent a few days studying the [Open SWE](https://github.com/langchain-ai/open-
 
 The mechanics matter here, so it is worth being concrete. An agent loop keeps one growing message list. Every iteration, the entire list goes back to the model: the user's task, every tool call the model made, every tool result that came back. Nothing falls out on its own.
 
-Here is that list for a small, completely ordinary task: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up request from the user. Twenty-one messages. The transcript uses a typical harness shape: `read_file` returns a one-line tool ack, and the file body arrives on the next turn as a user message wrapped in `<read_file>…</read_file>`. Each bar is one message, drawn to scale by character count. The file bodies are real files from the Genkit repo.
+Here is a real run: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up from the user. Twenty-one messages. The figure below shows the actual wire format (what lands in each message slot), which messages are hot, and what `wrap_generate` does to the prefix before the next model call.
+
+![The wire format for a 21-message coding agent run, with hot zones highlighted and before/after compaction on the worst offenders.](/figures/compaction-wire.svg)
+
+Start at the top: `read_file` returns a one-line tool ack, then the full file body queues as a **user** message wrapped in `<read_file>…</read_file>`. That pattern is the harness shape. The file is not gone from context, it just moved channels.
+
+The timeline in the middle is the full list at turn 21. Green is file or log bulk entering the history. Rust is dead weight in tool-call arguments: a patch or whole file that already landed on disk but still rides along in the model's tool request. The dashed line is the keep window: messages 16–21 stay verbatim; everything above it is fair game for compaction.
+
+The bottom panels zoom in on the worst offenders. Message #4 is a 14.5k-character read delivery truncated to a short preview. Message #12 is a `write_file` whose `content` argument still carries the whole file even though the write already succeeded. That is the rust bar summarization cannot touch on its own.
+
+For the same transcript drawn purely to scale by character count:
 
 ![Per-message sizes of a 21-message coding agent transcript. File deliveries and tool arguments dwarf all the prose.](/figures/compaction-anatomy.svg)
 
-A few things jump out. The prose is invisible: the task, the model's commentary, the `read_file` acks are all under 100 characters each, slivers at this scale. The green bars are bulk entering the history: two `<read_file>` user deliveries (about 21k characters between them) plus a pytest traceback in a tool result. The rust-colored bars are the part conversation summarization can never reach on its own: an `edit_file` request carrying a 2.6k patch in its arguments, and a `write_file` request carrying the entire updated file (about 15k characters) as `content`. The file is already on disk at that point. Those bytes ride along on every subsequent model call anyway.
+A few things jump out at this scale. The prose is invisible: the task, the model's commentary, the `read_file` acks are all under 100 characters each, slivers. The green bars are bulk entering the history: two `<read_file>` user deliveries (about 21k characters between them) plus a pytest traceback in a tool result. The rust-colored bars are conversation summarization's blind spot: an `edit_file` request carrying a 2.6k patch in its arguments, and a `write_file` request carrying the entire updated file (about 15k characters) as `content`.
 
 Total: about 50.5k characters, roughly 12k tokens, for a task a human would describe in one sentence. By message 21 the model needs almost none of it. That ratio is the whole problem, and it gets worse linearly with every tool call.
 
@@ -154,7 +164,7 @@ Tell your coding agent to copy `compaction.py` from the recipe repo into your ap
 
 ## What it buys you
 
-Here is the transcript from Part 1 again, run through the structural pass at its default settings (`keep_recent_messages=6`), drawn at the same scale:
+The wire figure in Part 1 shows compaction on individual messages. Here is the same transcript aggregated, run through the structural pass at its default settings (`keep_recent_messages=6`), drawn to scale:
 
 ![The same transcript at two stages: 50.5k characters raw, then structurally compacted with old read deliveries and tool arguments clipped.](/figures/compaction-stages.svg)
 
