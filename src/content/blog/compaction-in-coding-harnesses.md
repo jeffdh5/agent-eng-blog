@@ -4,15 +4,17 @@ description: "I spent a few days studying Open SWE's compaction stack and reimpl
 pubDate: "Jun 12 2026"
 ---
 
-If you are building a coding agent on Genkit, you will eventually hit the context ceiling. Summarizing old chat turns sounds like the fix, and for a chat agent it mostly is. For a coding agent the bloat is structural: file bodies, command output, and tool-call arguments that never leave the message list. A `write_file` from turn 3 is still carrying its full payload at turn 40, and no summary of the conversation touches it.
+If you are building a coding agent, you will eventually hit the context ceiling. Summarizing old chat turns sounds like the fix, and for a chat agent it mostly is. For a coding agent the bloat is structural: file bodies, command output, and tool-call arguments that never leave the message list. A `write_file` from turn 3 is still carrying its full payload at turn 40, and no summary of the conversation touches it.
 
-I spent a few days studying the [Open SWE](https://github.com/langchain-ai/open-swe) harness and the [Deep Agents](https://github.com/langchain-ai/deepagents) library it sits on, taking notes on what I thought was interesting. Compaction was the topic I kept coming back to. It matters more for coding agents than chat agents, and I wanted to see what they actually do about it before trying it myself. What follows is that distillation, reimplemented as Genkit middleware you can copy into your project, with a map of where each piece hooks into the loop (`wrap_tool` vs `wrap_generate`).
+I spent a few days studying the [Open SWE](https://github.com/langchain-ai/open-swe) harness and the [Deep Agents](https://github.com/langchain-ai/deepagents) library it sits on, taking notes on what I thought was interesting. Compaction was the topic I kept coming back to. It matters more for coding agents than chat agents, and I wanted to see what they actually do about it. The first half of this post is that distillation. The second half is how I mapped it onto Genkit middleware, with a full example at the end.
+
+# Part 1: What I found interesting
 
 ## What the message history actually looks like
 
 The mechanics matter here, so it is worth being concrete. An agent loop keeps one growing message list. Every iteration, the entire list goes back to the model: the user's task, every tool call the model made, every tool result that came back. Nothing falls out on its own.
 
-Here is that list for a small, completely ordinary task: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up request from the user. Twenty-one messages. The transcript uses Genkit's current `Filesystem` middleware shape: `read_file` returns a one-line tool ack, and the file body arrives on the next turn as a user message wrapped in `<read_file>…</read_file>`. Each bar is one message, drawn to scale by character count. The file bodies are real files from the Genkit repo; every number comes from running the transcript through the compaction middleware code linked at the end.
+Here is that list for a small, completely ordinary task: one failing test, two file reads, a pytest run, a patch, a rewrite, a green pytest run, then a follow-up request from the user. Twenty-one messages. The transcript uses a typical harness shape: `read_file` returns a one-line tool ack, and the file body arrives on the next turn as a user message wrapped in `<read_file>…</read_file>`. Each bar is one message, drawn to scale by character count. The file bodies are real files from the Genkit repo.
 
 ![Per-message sizes of a 21-message coding agent transcript. File deliveries and tool arguments dwarf all the prose.](/figures/compaction-anatomy.svg)
 
@@ -35,8 +37,6 @@ The model sees a one-line acknowledgment after an edit. The full diff goes into 
 
 Open SWE also caps its own before-read at 20,000 lines (`_MAX_DIFF_LINES`) when computing those diffs. Even the bookkeeping around compaction is budgeted.
 
-In Genkit terms, this maps to two hooks you already have. You can keep tool responses short in the tool implementation itself, and you can use `wrap_tool` plus the official `Artifacts` middleware to park the heavy payload in a side channel the model can reopen with `read_artifact` if it genuinely needs it. The model's transcript stays thin; the artifact store holds the bytes.
-
 ## What Deep Agents does underneath
 
 Deep Agents wires summarization into every agent by default. `create_deep_agent` adds `create_summarization_middleware(model, backend)` to the stack, and Open SWE rides on it without modification. The middleware does three things, in increasing order of severity, and the ordering is the lesson.
@@ -57,36 +57,30 @@ Second, large tool results get offloaded to the backend under `/large_tool_resul
 
 Third, when token usage crosses a threshold, the middleware summarizes the evicted span with an LLM call and appends the full original messages to `/conversation_history/{thread_id}.md` on the backend, so nothing is unrecoverable. With a known model profile, the defaults trigger at 85% of the context window and keep the most recent 10%.
 
-The layers fire cheapest first: keep bulk out at the tool boundary, clip old arguments before each model call, offload huge tool results, summarize only near the ceiling. Summarization is the only layer that costs a model call and the only one that loses information you cannot point back to. Deep Agents treats it accordingly.
+## The stack, in order
 
-In Genkit, the first and third layers live in `wrap_generate`, which runs on the full message list right before each model call. The second layer (immediate offload of a fresh, enormous tool result) lives in `wrap_tool`, which runs once per tool invocation. Genkit's session artifacts play the same recoverability role as Deep Agents' backend files: the transcript gets a pointer, the full text lives somewhere the agent can page back in.
+Putting Open SWE and Deep Agents together, the layers fire cheapest first:
 
-## Implementing the stack in Genkit middleware
+1. Keep bulk out of the message history at the tool boundary (short acks, diffs in artifacts, side channels for the UI)
+2. Clip bulky arguments in old tool calls before each model call
+3. Offload huge tool results, leaving a pointer the agent can follow
+4. Summarize with an LLM only near the context ceiling, with the verbatim transcript archived somewhere recoverable
 
-Genkit's middleware plugin gives you `BaseMiddleware` with `wrap_tool` and `wrap_generate`. You pass middleware instances in `use=[...]` alongside your tools, same as the official `Filesystem` and `Artifacts` helpers. Compaction is a recipe, not part of the official plugin: copy [`compaction.py`](https://github.com/jeffdh5/python-middleware-recipes/blob/main/recipes/compaction/compaction.py) from [jeffdh5/python-middleware-recipes](https://github.com/jeffdh5/python-middleware-recipes) into your project and wire it like this:
+Summarization is the only layer that costs a model call and the only one that loses information you cannot point back to. Both projects treat it accordingly. Everything above it is structural: cheap, and in practice lossless because the files are still on disk and the archived logs still exist.
 
-```python
-from compaction import Compaction
-from genkit.plugins.middleware import Artifacts, Filesystem
+A note on where the bytes land before any of this runs: harness design matters. Open SWE and Deep Agents paginate `read_file` and keep the body in the tool result. Genkit's official `Filesystem` middleware still queues full file bodies as user messages. Compaction can shrink stale deliveries either way, but paginated reads are the better starting point.
 
-await ai.generate(
-    prompt='Fix the failing test in auth.py',
-    use=[
-        Filesystem(root_dir='./workspace'),
-        Artifacts(),
-        Compaction(
-            max_context_tokens=200_000,
-            trigger_fraction=0.85,
-            keep_fraction=0.10,
-            summary_model='googleai/gemini-flash-latest',
-        ),
-    ],
-)
-```
+# Part 2: Implementing this in Genkit
 
-Here is how each Deep Agents layer shows up in that file.
+Genkit's middleware plugin gives you `BaseMiddleware` with two hooks that map cleanly onto the stack above. `wrap_tool` runs once after each tool call. `wrap_generate` runs on the full message list right before each model call. You pass middleware instances in `use=[...]` alongside your tools, same as the official `Filesystem` and `Artifacts` helpers.
 
-In `wrap_tool`, tool results above `offload_tool_threshold_chars` (about 80k characters) go to a session artifact with a head/tail sample left inline. `read_file`, `write_file`, `edit_file`, and `list_files` are excluded because those tools are already bounded or paginated at the harness level:
+Open SWE's short acks and artifact-side diffs land in the tool implementation plus `Artifacts`, with optional logic in `wrap_tool`. Deep Agents' argument clipping and summarization live in `wrap_generate`. Immediate offload of a fresh enormous tool result lives in `wrap_tool`. The recoverable conversation log uses session artifacts the same way Deep Agents uses backend files.
+
+Compaction is a recipe, not part of the official plugin. Copy [`compaction.py`](https://github.com/jeffdh5/python-middleware-recipes/blob/main/recipes/compaction/compaction.py) from [jeffdh5/python-middleware-recipes](https://github.com/jeffdh5/python-middleware-recipes) into your project, then import it as `from compaction import Compaction`.
+
+## What the recipe does in each hook
+
+In `wrap_tool`, tool results above `offload_tool_threshold_chars` (about 80k characters) go to a session artifact with a head/tail sample left inline. `read_file`, `write_file`, `edit_file`, and `list_files` are excluded because those tools should already be bounded at the harness level:
 
 ```python
 artifact_name = f'tool-output/{tool_name}/{ref}.txt'
@@ -99,11 +93,68 @@ return MultipartToolResponse(
 )
 ```
 
-In `wrap_generate`, messages outside the keep window get structurally compacted before the model sees them: bulky tool-call arguments clipped, oversized tool responses and user-message text truncated to a preview. That is the Deep Agents argument-clipping pass, pointed at the same rust bars from the figure. When estimated usage crosses `trigger_fraction` of `max_context_tokens`, the evicted prefix is appended to a conversation-log artifact and replaced with an LLM-written handoff note. The handoff embeds the log path so the agent can `read_artifact` the verbatim transcript later, same recoverability model as Deep Agents' `/conversation_history/` files.
+In `wrap_generate`, messages outside the keep window get structurally compacted before the model sees them: bulky tool-call arguments clipped, oversized tool responses and user-message text truncated to a preview. When estimated usage crosses `trigger_fraction` of `max_context_tokens`, the evicted prefix is appended to a conversation-log artifact and replaced with an LLM-written handoff note. The handoff embeds the log path so the agent can `read_artifact` the verbatim transcript later.
 
-If you are assembling your own middleware instead of copying the recipe, the mapping is direct. Open SWE's artifact-side diffs are a `wrap_tool` concern plus whatever your UI reads from `ctx.session` artifacts. Deep Agents' argument clipping and summarization are a `wrap_generate` concern over `params.options.messages`. You do not need to fork Genkit's agent loop to get this; you add middleware classes and list them in `use`.
+If you are assembling your own middleware instead of copying the recipe, the mapping is direct. Open SWE's artifact-side diffs are a `wrap_tool` concern plus whatever your UI reads from `ctx.session` artifacts. Deep Agents' argument clipping and summarization are a `wrap_generate` concern over `params.options.messages`. You do not need to fork Genkit's agent loop; you add middleware classes and list them in `use`.
 
-Here is the transcript from the first figure again, run through the structural pass at its default settings (`keep_recent_messages=6`), drawn at the same scale:
+## Full example
+
+A minimal coding-agent session with the full stack wired in. `Filesystem` supplies the tools, `Artifacts` gives the model `read_artifact` for recovery, and `Compaction` runs the structural layers plus optional summarization:
+
+```python
+from pathlib import Path
+
+from genkit import Genkit, Message, Part, Role, TextPart
+from genkit.plugins.google_genai import GoogleAI
+from genkit.plugins.middleware import Artifacts, Filesystem, Middleware
+from compaction import Compaction
+
+workspace = Path('./workspace')
+workspace.mkdir(exist_ok=True)
+
+ai = Genkit(
+    plugins=[GoogleAI(), Middleware()],
+    model='googleai/gemini-flash-latest',
+)
+
+middleware = [
+    Filesystem(root_dir=str(workspace), allow_write_access=True),
+    Artifacts(),
+    Compaction(
+        max_context_tokens=200_000,
+        trigger_fraction=0.85,
+        keep_fraction=0.10,
+        summary_model='googleai/gemini-flash-latest',
+    ),
+]
+
+messages: list[Message] = [
+    Message(
+        role=Role.SYSTEM,
+        content=[Part(root=TextPart(text=(
+            'You are a coding agent. Work only inside the workspace directory. '
+            'Read files before editing them.'
+        )))],
+    ),
+]
+
+async def run_turn(user_input: str) -> None:
+    global messages
+    response = await ai.generate(
+        prompt=user_input,
+        messages=messages,
+        max_turns=20,
+        use=middleware,
+    )
+    messages = response.messages
+    print(response.text)
+```
+
+Tell your coding agent to copy `compaction.py` from the recipe repo into your app if you have not already. The knobs worth tuning first are `keep_fraction` and `trigger_fraction` for your model's real context size.
+
+## What it buys you
+
+Here is the transcript from Part 1 again, run through the structural pass at its default settings (`keep_recent_messages=6`), drawn at the same scale:
 
 ![The same transcript at two stages: 50.5k characters raw, then structurally compacted with old read deliveries and tool arguments clipped.](/figures/compaction-stages.svg)
 
@@ -116,10 +167,10 @@ git clone https://github.com/jeffdh5/python-middleware-recipes
 cd python-middleware-recipes && uv sync && uv run pytest -q
 ```
 
-## What is still open on the Genkit side
+## What is still open
 
-The official `Filesystem` middleware still queues full file bodies as user messages instead of paginating inline the way Deep Agents does. Re-read dedup exists in the Go plugin but not Python yet. Those are harness fixes upstream of compaction, but they change where the bytes land before your middleware ever runs. The compaction recipe works with either delivery style; paginated `read_file` with `offset` and `limit` is the shape I would rather build toward.
+Re-read dedup exists in Genkit's Go plugin but not Python yet. The official `Filesystem` middleware still queues reads instead of paginating inline. Those are harness fixes upstream of compaction, but they change where the bytes land before your middleware ever runs.
 
-A note on scope: this is a recipe you copy and tune, not a supported Genkit plugin. The measurement above is one synthetic transcript plus unit tests, not a long production run. If you try it on your harness, the first knob to touch is probably `keep_fraction` and `trigger_fraction` for your model's real context size.
+A note on scope: this is a recipe you copy and tune, not a supported Genkit plugin. The measurement above is one synthetic transcript plus unit tests, not a long production run.
 
 Further reading: Open SWE's [`agent/middleware/tool_artifact.py`](https://github.com/langchain-ai/open-swe) and `agent/server.py`; Deep Agents' [`middleware/summarization.py`](https://github.com/langchain-ai/deepagents) and `graph.py`. The Genkit recipe is [jeffdh5/python-middleware-recipes](https://github.com/jeffdh5/python-middleware-recipes). The figures were generated by [a script](https://github.com/jeffdh5/agent-eng-blog/tree/main/scripts) that builds the transcript above and runs it through the recipe's compaction functions.
