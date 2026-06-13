@@ -1,12 +1,12 @@
 ---
 title: "Compaction in coding harnesses"
-description: "What Open SWE and Deep Agents taught us about keeping coding-agent context small, and how to implement the same layers as Genkit middleware in your own harness."
+description: "I spent a few days studying Open SWE's compaction stack and reimplemented what mattered as Genkit middleware you can copy into your own coding-agent harness."
 pubDate: "Jun 12 2026"
 ---
 
 If you are building a coding agent on Genkit, you will eventually hit the context ceiling. Summarizing old chat turns sounds like the fix, and for a chat agent it mostly is. For a coding agent the bloat is structural: file bodies, command output, and tool-call arguments that never leave the message list. A `write_file` from turn 3 is still carrying its full payload at turn 40, and no summary of the conversation touches it.
 
-This post is for people wiring their own agent harness in Genkit. The compaction ideas below are not original to us. I read [Open SWE](https://github.com/langchain-ai/open-swe) and the [Deep Agents](https://github.com/langchain-ai/deepagents) library it sits on, pulled out the tricks that actually move the needle, and reimplemented them as Genkit middleware you can copy into your project. The goal is to show where each trick hooks into the agent loop (`wrap_tool` vs `wrap_generate`), and what you get if you stack them the way those projects do.
+I spent a few days studying the [Open SWE](https://github.com/langchain-ai/open-swe) harness and the [Deep Agents](https://github.com/langchain-ai/deepagents) library it sits on, taking notes on what I thought was interesting. Compaction was the topic I kept coming back to. It matters more for coding agents than chat agents, and I wanted to see what they actually do about it before trying it myself. What follows is that distillation, reimplemented as Genkit middleware you can copy into your project, with a map of where each piece hooks into the loop (`wrap_tool` vs `wrap_generate`).
 
 ## What the message history actually looks like
 
@@ -20,7 +20,7 @@ A few things jump out. The prose is invisible: the task, the model's commentary,
 
 Total: about 50.5k characters, roughly 12k tokens, for a task a human would describe in one sentence. By message 21 the model needs almost none of it. That ratio is the whole problem, and it gets worse linearly with every tool call.
 
-## What we learned from Open SWE
+## What Open SWE does at the tool boundary
 
 Open SWE's main agent is a `create_deep_agent()` call in `agent/server.py` with a custom middleware stack on top. The piece I kept coming back to is `ToolArtifactMiddleware` in `agent/middleware/tool_artifact.py`. Its module docstring states the design plainly:
 
@@ -37,7 +37,7 @@ Open SWE also caps its own before-read at 20,000 lines (`_MAX_DIFF_LINES`) when 
 
 In Genkit terms, this maps to two hooks you already have. You can keep tool responses short in the tool implementation itself, and you can use `wrap_tool` plus the official `Artifacts` middleware to park the heavy payload in a side channel the model can reopen with `read_artifact` if it genuinely needs it. The model's transcript stays thin; the artifact store holds the bytes.
 
-## What we learned from Deep Agents
+## What Deep Agents does underneath
 
 Deep Agents wires summarization into every agent by default. `create_deep_agent` adds `create_summarization_middleware(model, backend)` to the stack, and Open SWE rides on it without modification. The middleware does three things, in increasing order of severity, and the ordering is the lesson.
 
